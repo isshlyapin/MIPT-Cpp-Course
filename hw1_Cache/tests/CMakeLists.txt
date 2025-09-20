@@ -6,6 +6,8 @@ find_package(GTest REQUIRED)
 
 add_executable(test_lirs_cache test_lirs_cache.cpp)
 
+target_compile_definitions(test_lirs_cache PRIVATE TEST_DATA_DIR="${CMAKE_SOURCE_DIR}/tests/data")
+
 target_link_libraries(
     test_lirs_cache 
     PRIVATE 

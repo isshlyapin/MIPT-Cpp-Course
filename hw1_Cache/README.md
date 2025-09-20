@@ -28,7 +28,7 @@
     ```
 3. Соберите проект
     ```bash
-    cmake -S . -B build
+    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
     ```
     ```bash
     cmake --build build

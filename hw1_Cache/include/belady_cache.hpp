@@ -10,9 +10,9 @@
 template <typename PageT, typename KeyT = int>
 class BeladyCache {
 public:
-    using CacheList = typename std::list<std::pair<KeyT, PageT>>;
-    using CacheIt   = typename CacheList::iterator;
-    using CacheMap  = typename std::map<size_t, CacheIt>; 
+    using CacheList  = typename std::list<std::pair<KeyT, PageT>>;
+    using CacheIt    = typename CacheList::iterator;
+    using CacheMap   = typename std::map<size_t, CacheIt>; 
     using CacheMapIt = typename CacheMap::iterator;
 
     BeladyCache(size_t sz, const std::vector<KeyT>& future_requests) : sz_(sz) {
