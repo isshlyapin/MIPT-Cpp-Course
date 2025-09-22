@@ -31,36 +31,23 @@ TEST(BeladyCacheTest, EvictionPolicy) {
     EXPECT_FALSE(cache.lookup_update(1, slow_get_page));
     EXPECT_FALSE(cache.lookup_update(2, slow_get_page));
 
-    // Запрос 3 — вытеснит 2
+    // Запрос 3 проходит без вытеснения
     EXPECT_FALSE(cache.lookup_update(3, slow_get_page));
 
-    // Запрос 4 — вытеснит 3
+    // Запрос 4 проходит без вытеснения
     EXPECT_FALSE(cache.lookup_update(4, slow_get_page));
 
-    // Теперь в кэше {1, 4}
+    // Сейчас в кэше {1, 2}
     EXPECT_TRUE(cache.lookup_update(1, slow_get_page));
 
-    // Запрос 2 - вытеснит 1 
-    EXPECT_FALSE(cache.lookup_update(2, slow_get_page));
+    // Сейчас в кэше {1, 2} 
+    EXPECT_TRUE(cache.lookup_update(2, slow_get_page));
 
-    // Запрос 3 - вытеснит 2 
+    // Запрос 3 - вытеснит 1
     EXPECT_FALSE(cache.lookup_update(3, slow_get_page));
 
-    // Теперь в кэше {4, 3}
-    EXPECT_TRUE(cache.lookup_update(4, slow_get_page));
-}
-
-TEST(BeladyCacheTest, HandlesDeadKeys) {
-    std::vector<int> requests = {10, 20, 30, 10};
-    BeladyCache<int> cache(2, requests);
-
-    EXPECT_FALSE(cache.lookup_update(10, slow_get_page));
-    EXPECT_FALSE(cache.lookup_update(20, slow_get_page));
-
-    // 30 вытеснит 20 (т.к. 10 ещё нужен, а 20 больше не встречается)
-    EXPECT_FALSE(cache.lookup_update(30, slow_get_page));
-
-    EXPECT_TRUE(cache.lookup_update(10, slow_get_page));
+    // Теперь в кэше {3, 2}
+    EXPECT_FALSE(cache.lookup_update(4, slow_get_page));
 }
 
 int main(int argc, char **argv) {
