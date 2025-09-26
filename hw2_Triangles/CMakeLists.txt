@@ -17,3 +17,5 @@ target_sources(triangle_intersection
     FILES
         modules/triangle_intersection.cppm
 )
+
+add_subdirectory(test)

@@ -1,8 +1,7 @@
-#include <array>
-#include <iostream>
-#include <unordered_set>
-#include <vector>
 #include <set>
+#include <array>
+#include <vector>
+#include <iostream>
 
 import triangle_intersection;
 
@@ -23,8 +22,7 @@ int main() {
     }
 
     // Main cycle
-    // std::set<int> intersects;
-    std::unordered_set<int> intersects;
+    std::set<int> intersects;
     for (int i = 0; i < N; ++i) {
         if (!intersects.contains(i)) {
             for (int j = 0; j < N; ++j) {
@@ -38,13 +36,7 @@ int main() {
     }
 
     // Output results
-    // for (auto id: intersects) {
-    //     std::cout << id << std::endl;        
-    // }
-
-    for (int i = 0; i < 10; ++i) {
-        if (!intersects.contains(i)) {
-            std::cout << i << std::endl;
-        }
+    for (auto id: intersects) {
+        std::cout << id << std::endl;        
     }
 }
