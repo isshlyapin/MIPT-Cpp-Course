@@ -468,7 +468,7 @@ private:
                                              const Point3& p2, double d2) 
     {
         Vector3 edge{p1, p2};
-        double t = d1 / (d1 - d2);  // параметр пересечения
+        const double t = d1 / (d1 - d2);  // параметр пересечения
         return Vector3{p1} + edge.scale(t);
     }
 

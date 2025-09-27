@@ -14,7 +14,7 @@ int main() {
     for (int i = 0; i < N; ++i) {
         std::array<Point3, 3> points;
         for (int j = 0; j < 3; ++j) {
-            double x{0}, y{0}, z{0};
+            double x{0}; double y{0}; double z{0};
             std::cin >> x >> y >> z;
             points.at(j) = Point3{.x=x, .y=y, .z=z};
         }
@@ -24,19 +24,19 @@ int main() {
     // Main cycle
     std::set<int> intersects;
     for (int i = 0; i < N; ++i) {
-        if (!intersects.contains(i)) {
-            for (int j = 0; j < N; ++j) {
-                if (i != j && triangles.at(i).intersects(triangles.at(j))) {
-                    intersects.insert(i);
-                    intersects.insert(j);
-                    break;
-                }
+        if (intersects.contains(i)) { continue; }        
+        for (int j = 0; j < N; ++j) {
+            if (i == j) { continue;} 
+            if (triangles.at(i).intersects(triangles.at(j))) {
+                intersects.insert(i);
+                intersects.insert(j);
+                break;
             }
         }
     }
 
     // Output results
     for (auto id: intersects) {
-        std::cout << id << std::endl;        
+        std::cout << id << '\n';        
     }
 }
