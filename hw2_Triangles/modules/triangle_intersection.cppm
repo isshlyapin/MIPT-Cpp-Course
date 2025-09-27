@@ -2,6 +2,8 @@ module;
 
 #include <array>
 #include <cmath>
+#include <ranges>
+#include <vector>
 #include <utility>
 #include <cassert>
 #include <algorithm>
@@ -369,7 +371,9 @@ private:
             plane_.get_normal().cross(other_t.get_plane().get_normal());
 
         auto intersection_proj_other_t = 
-            compute_projection_on_plane_intesection_vector(other_t, plane_, intersection_vec);
+            compute_projection_on_plane_intesection_vector(
+                other_t, plane_, intersection_vec
+            );
 
         auto intersection_proj = 
             compute_projection_on_plane_intesection_vector(
@@ -391,24 +395,58 @@ private:
     }
     
     static std::array<double, 2> compute_projection_on_plane_intesection_vector(
-      const Triangle3& tri, const Plane3& plane, const Vector3& dir) {
+        const Triangle3& tri, const Plane3& plane, const Vector3& dir) 
+    {
         auto distances = distances_to_plane(tri, plane);
-        const int uniq_id = find_unique_vertex(distances);
 
-        if (uniq_id == -1) {
-            throw std::runtime_error("No unique vertex found: triangle may be coplanar or on one side of the plane");
-        }
+        auto zeroes_indices = std::ranges::views::iota(0, 3)
+            | std::ranges::views::filter([&](int i){ return std::fabs(distances[i]) < EPS; });
+
+        const std::vector<int> zi{zeroes_indices.begin(), zeroes_indices.end()};
 
         std::array<double, 2> projections{};
-        int idx = 0;
-        for (int i = 0; i < 3; ++i) {
-            if (i == uniq_id) continue;
 
-            Vector3 p = intersect_edge_with_plane(
-                tri.get_point(i), distances[i],
-                tri.get_point(uniq_id), distances[uniq_id]
-            );
-            projections[idx++] = p.dot(dir);
+        if (zi.size() == 2) {
+            projections[0] = dir.dot(tri.get_point(zi[0]));
+            projections[1] = dir.dot(tri.get_point(zi[1]));
+        }
+
+        if (zi.size() == 1) {
+            int i = zi[0];
+            if (distances[(i+1)%3] * distances[(i+2)%3] < -EPS) {
+                projections[0] = dir.dot(tri.get_point(i));
+                projections[1] = dir.dot(
+                    intersect_edge_with_plane(
+                        tri.get_point((i+1)%3), distances[(i+1)%3], 
+                        tri.get_point((i+2)%3), distances[(i+2)%3]
+                    )
+                );
+            } else {
+                projections[0] = dir.dot(tri.get_point(i));
+                projections[1] = dir.dot(tri.get_point(i));
+            }
+        }
+
+        if (zi.empty()) {
+            for (int i = 0; i < 3; ++i) {
+                const int j = (i + 1) % 3;
+                const int k = (i + 2) % 3;
+                if (distances[i] * distances[j] < -EPS && 
+                    distances[i] * distances[k] < -EPS) {
+                    projections[0] = dir.dot(
+                        intersect_edge_with_plane(
+                            tri.get_point(i), distances[i],
+                            tri.get_point(j), distances[j]
+                        )
+                    );
+                    projections[1] = dir.dot(
+                        intersect_edge_with_plane(
+                            tri.get_point(i), distances[i],
+                            tri.get_point(k), distances[k]
+                        )
+                    );  
+                }
+            }
         }
 
         if (projections[0] > projections[1]) {
@@ -426,36 +464,9 @@ private:
         };
     }
 
-    static int find_unique_vertex(const std::array<double,3>& distance) {
-        int zero_idx   = -1;
-        int zero_count = 0;
-        int nonzero_idx   = -1;
-        int nonzero_count = 0;
-
-        for (int i = 0; i < 3; ++i) {
-            if (std::fabs(distance[i]) < EPS) {
-                zero_idx = i; zero_count++;
-            } else {
-                nonzero_idx = i; nonzero_count++;
-            }
-        }
-
-        if (zero_count == 1) { return zero_idx; }
-        if (nonzero_count == 1) { return nonzero_idx; }
-
-        for (int i = 0; i < 3; ++i) {
-            int const j = (i + 1) % 3;
-            int const k = (i + 2) % 3;
-            if (distance[i] * distance[j] < -EPS && 
-                distance[i] * distance[k] < -EPS) { return i; }
-        }
-
-        return -1;
-    }
-
-
     static Vector3 intersect_edge_with_plane(const Point3& p1, double d1,
-                                      const Point3& p2, double d2) {
+                                             const Point3& p2, double d2) 
+    {
         Vector3 edge{p1, p2};
         double t = d1 / (d1 - d2);  // параметр пересечения
         return Vector3{p1} + edge.scale(t);

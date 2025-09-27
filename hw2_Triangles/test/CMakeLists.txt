@@ -1,5 +1,7 @@
 enable_testing()
 
+find_package(Catch2 REQUIRED)
+
 set(TESTS
     1
     2
@@ -23,3 +25,16 @@ foreach(t ${TESTS})
             ${CMAKE_CURRENT_SOURCE_DIR}/data/${t}.out
     )
 endforeach()
+
+add_executable(test_triangle_intersection 
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_triangle_intersection.cpp
+)
+
+target_link_libraries(test_triangle_intersection 
+    PRIVATE Catch2::Catch2WithMain
+    PRIVATE triangle_intersection_lib
+)
+
+include(CTest)
+include(Catch)
+catch_discover_tests(test_triangle_intersection)
