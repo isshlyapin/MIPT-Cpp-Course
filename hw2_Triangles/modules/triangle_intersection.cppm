@@ -290,59 +290,37 @@ public:
     }
 
     bool intersects(const Triangle3& other_t) const {
-        const std::array<double, 3> distances_other_t{
-            plane_.distance_to_point(other_t.get_point(0)),
-            plane_.distance_to_point(other_t.get_point(1)),
-            plane_.distance_to_point(other_t.get_point(2))
-        };
-
         // Triangles from the same plane
-        if (std::fabs(distances_other_t[0]) < EPS &&
-            std::fabs(distances_other_t[1]) < EPS && 
-            std::fabs(distances_other_t[2]) < EPS) {
+        if (is_coplanar(other_t)) {
             return intersects_2d(other_t);
         }
 
-        auto sign = [](double x) -> int {
-            if (x > EPS) return 1;
-            if (x < -EPS) return -1;
-            return 0;
-        };
-
-        const std::array<int, 3> distance_signs_other_t{
-            sign(distances_other_t[0]),
-            sign(distances_other_t[1]),
-            sign(distances_other_t[2])
-        };
-
-        const std::array<double, 3> distances{
-            other_t.get_plane().distance_to_point(points_[0]),
-            other_t.get_plane().distance_to_point(points_[1]),
-            other_t.get_plane().distance_to_point(points_[2])
-        };
-       
-        const std::array<int, 3> distance_signs{
-            sign(distances[0]),
-            sign(distances[1]),
-            sign(distances[2])
-        };
-        
-        auto unique_index = [](const std::array<int, 3>& s) -> int {
-            if (s[0] == s[1] && s[2] != s[0]) return 2;
-            if (s[0] == s[2] && s[1] != s[0]) return 1;
-            if (s[1] == s[2] && s[0] != s[1]) return 0;
-            return -1;
-        };
-
-
-        const int uniq_id_other_t = unique_index(distance_signs_other_t);
-        const int uniq_id = unique_index(distance_signs);
-
-        if (uniq_id_other_t != -1 && uniq_id != -1) {
-            return handle_plane_intersection(other_t, distances_other_t, distances, uniq_id_other_t, uniq_id);
+        if (intersects(other_t.get_plane()) && other_t.intersects(plane_)) {
+            return intersects_on_plane_intersection_line(other_t);
         }
         
         return false;
+    }
+
+    bool intersects(const Plane3& plane) const {
+        const auto distances = distances_to_plane(*this, plane);
+
+        const auto [min, max] = std::ranges::minmax_element(distances);
+
+        const bool is_intersect = *min < -EPS && *max > EPS; 
+
+        const bool is_lie = std::ranges::any_of(
+            distances, 
+            [](double d){ return std::fabs(d) < EPS; }
+        );
+
+        return  is_intersect || is_lie;
+    }
+
+    bool is_coplanar(const Triangle3& other_t) const {
+        const auto distances = distances_to_plane(other_t, plane_);
+
+        return std::ranges::all_of(distances, [](double d){ return std::fabs(d) < EPS; });
     }
 
     const Point3& get_point(int index) const {
@@ -357,71 +335,7 @@ public:
         return plane_;
     }
     
-private:
-    bool handle_plane_intersection(
-      const Triangle3& other_t, 
-      const std::array<double, 3>& distances_other_t,
-      const std::array<double, 3>& distances, 
-      int uniq_id_other_t,
-      int uniq_id) const {
-        auto compute_projection = [](
-            const Triangle3& tri,
-            const Vector3 dir,
-            const std::array<double, 3>& distances,
-            int uniq_id
-            ) {
-            std::array<double, 2> points{};
-            int idx = 0;
-
-            for (int i = 0; i < 3; ++i) {
-                if (i == uniq_id) continue;
-
-                Vector3 edge = Vector3{tri.get_point(i), tri.get_point(uniq_id)};
-                double t = distances[i] / (distances[i] + distances[uniq_id]);
-                points[idx++] = (Vector3{tri.get_point(i)} + edge.scale(t)).dot(dir);
-            }
-            return points;
-        };
-
-        const Vector3 intersection_dir = plane_.get_normal().cross(other_t.get_plane().get_normal());
-
-        auto intersection_projections_other_t = 
-            compute_projection(other_t, intersection_dir, distances_other_t, uniq_id_other_t);
-
-        auto intersection_projections = 
-            compute_projection(*this, intersection_dir, distances, uniq_id);
-            
-        if (intersection_projections[0] > intersection_projections[1]) {
-            std::swap(intersection_projections[0], intersection_projections[1]);
-        }
-
-        if (intersection_projections_other_t[0] > intersection_projections_other_t[1]) {
-            std::swap(intersection_projections_other_t[0], intersection_projections_other_t[1]);
-        }
-
-        const bool overlap = 
-            std::max(intersection_projections[0], intersection_projections_other_t[0]) <= 
-            std::min(intersection_projections[1], intersection_projections_other_t[1]);
-        
-        return overlap;
-    }
-
-    bool intersects_2d(const Triangle3& other_t) const {
-        auto proj1 = project_to_2d(points_, plane_.get_normal());
-        auto proj2 = project_to_2d(
-            {other_t.get_point(0), other_t.get_point(1), other_t.get_point(2)},
-            plane_.get_normal()
-        );
-
-        const Triangle2 t1{proj1[0], proj1[1], proj1[2]};
-        const Triangle2 t2{proj2[0], proj2[1], proj2[2]};
-
-        return t1.intersects(t2);
-    }
-
-    static std::array<Point2, 3> project_to_2d(
-      const std::array<Point3, 3>& pts,
-      const Vector3& normal) {
+    Triangle2 project_to_2d(const Vector3& normal) const {
         // Выбираем ось с максимальным влиянием в нормали
         const double ax = std::fabs(normal.x);
         const double ay = std::fabs(normal.y);
@@ -431,22 +345,120 @@ private:
 
         if (ax > ay && ax > az) {
             // отбросить X → остаются (y, z)
-            for (int i = 0; i < 3; i++) {
-                result[i] = Point2(pts[i].y, pts[i].z);
+            for (int i = 0; i < 3; ++i) {
+                result[i] = Point2(points_[i].y, points_[i].z);
             }
-        } else if (ay > az) {
+        } else if (ay > ax && ay > az) {
             // отбросить Y → остаются (x, z)
-            for (int i = 0; i < 3; i++) {
-                result[i] = Point2(pts[i].x, pts[i].z);
+            for (int i = 0; i < 3; ++i) {
+                result[i] = Point2(points_[i].x, points_[i].z);
             }
         } else {
             // отбросить Z → остаются (x, y)
-            for (int i = 0; i < 3; i++) {
-                result[i] = Point2(pts[i].x, pts[i].y);
+            for (int i = 0; i < 3; ++i) {
+                result[i] = Point2(points_[i].x, points_[i].y);
             }
         }
 
-        return result;
+        return Triangle2{result[0], result[1], result[2]};
+    }
+
+private:
+    bool intersects_on_plane_intersection_line(const Triangle3& other_t) const {
+        const Vector3 intersection_vec = 
+            plane_.get_normal().cross(other_t.get_plane().get_normal());
+
+        auto intersection_proj_other_t = 
+            compute_projection_on_plane_intesection_vector(other_t, plane_, intersection_vec);
+
+        auto intersection_proj = 
+            compute_projection_on_plane_intesection_vector(
+                *this, other_t.get_plane(), intersection_vec
+            );
+
+        const bool overlap = 
+            std::max(intersection_proj[0], intersection_proj_other_t[0]) <= 
+            std::min(intersection_proj[1], intersection_proj_other_t[1]);
+        
+        return overlap;
+    }
+
+    bool intersects_2d(const Triangle3& other_t) const {
+        const Triangle2 t1 = project_to_2d(plane_.get_normal());
+        const Triangle2 t2 = other_t.project_to_2d(plane_.get_normal());
+
+        return t1.intersects(t2);
+    }
+    
+    static std::array<double, 2> compute_projection_on_plane_intesection_vector(
+      const Triangle3& tri, const Plane3& plane, const Vector3& dir) {
+        auto distances = distances_to_plane(tri, plane);
+        const int uniq_id = find_unique_vertex(distances);
+
+        if (uniq_id == -1) {
+            throw std::runtime_error("No unique vertex found: triangle may be coplanar or on one side of the plane");
+        }
+
+        std::array<double, 2> projections{};
+        int idx = 0;
+        for (int i = 0; i < 3; ++i) {
+            if (i == uniq_id) continue;
+
+            Vector3 p = intersect_edge_with_plane(
+                tri.get_point(i), distances[i],
+                tri.get_point(uniq_id), distances[uniq_id]
+            );
+            projections[idx++] = p.dot(dir);
+        }
+
+        if (projections[0] > projections[1]) {
+            std::swap(projections[0], projections[1]);
+        }
+
+        return projections;
+    }
+
+    static std::array<double, 3> distances_to_plane(const Triangle3& tri, const Plane3& plane) {
+        return {
+            plane.distance_to_point(tri.get_point(0)),
+            plane.distance_to_point(tri.get_point(1)),
+            plane.distance_to_point(tri.get_point(2))
+        };
+    }
+
+    static int find_unique_vertex(const std::array<double,3>& distance) {
+        int zero_idx   = -1;
+        int zero_count = 0;
+        int nonzero_idx   = -1;
+        int nonzero_count = 0;
+
+        for (int i = 0; i < 3; ++i) {
+            if (std::fabs(distance[i]) < EPS) {
+                zero_idx = i; zero_count++;
+            } else {
+                nonzero_idx = i; nonzero_count++;
+            }
+        }
+
+        if (zero_count == 1) { return zero_idx; }
+        if (nonzero_count == 1) { return nonzero_idx; }
+
+        for (int i = 0; i < 3; ++i) {
+            int const j = (i + 1) % 3;
+            int const k = (i + 2) % 3;
+            if (distance[i] * distance[j] < -EPS && 
+                distance[i] * distance[k] < -EPS) { return i; }
+        }
+
+        return -1;
+    }
+
+
+    static Vector3 intersect_edge_with_plane(const Point3& p1, double d1,
+                                      const Point3& p2, double d2) {
+        Vector3 edge{p1, p2};
+        double t = d1 / (d1 - d2);  // параметр пересечения
+        return Vector3{p1} + edge.scale(t);
     }
 
     Plane3 plane_;
