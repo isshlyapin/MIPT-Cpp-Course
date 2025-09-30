@@ -10,7 +10,8 @@ add_library(triangle_intersection_lib)
 target_sources(triangle_intersection_lib
     PUBLIC
         FILE_SET cxx_modules TYPE CXX_MODULES
-        FILES modules/triangle_intersection.cppm
+        FILES 
+        modules/triangle_intersection.cppm
 )
 
 add_executable(triangle_intersection)

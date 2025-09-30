@@ -13,6 +13,7 @@ set(TESTS
     8
     9
     10
+    11
 )
 
 foreach(t ${TESTS})
@@ -27,7 +28,11 @@ foreach(t ${TESTS})
 endforeach()
 
 add_executable(test_triangle_intersection 
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_triangle_intersection.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_line_segment_intersection_2d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_line_segment_intersection_3d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_triangle_intersection_2d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_line_intersection_3d.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_triangle_intersection_3d.cpp
 )
 
 target_link_libraries(test_triangle_intersection 

@@ -10,13 +10,13 @@ int main() {
     int N = 0;
     std::cin >> N;
 
-    std::vector<Triangle3> triangles;
+    std::vector<geometry::Triangle3> triangles;
     for (int i = 0; i < N; ++i) {
-        std::array<Point3, 3> points;
+        std::array<geometry::Point3, 3> points;
         for (int j = 0; j < 3; ++j) {
             double x{0}; double y{0}; double z{0};
             std::cin >> x >> y >> z;
-            points.at(j) = Point3{.x=x, .y=y, .z=z};
+            points.at(j) = geometry::Point3{.x=x, .y=y, .z=z};
         }
         triangles.emplace_back(points[0], points[1], points[2]);
     }
