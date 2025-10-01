@@ -17,3 +17,14 @@ struct InputCacheData {
 
 double slow_get_page(int key);
 void process_input(InputCacheData& ref_data);
+
+template<typename Cache, typename F>
+size_t count_hits(Cache& cache, const std::vector<int>& requests, F get_page) {
+    size_t n_hits = 0;
+    for (auto key : requests) {
+        if (cache.lookup_update(key, get_page)) {
+            n_hits++;
+        }
+    }
+    return n_hits;
+}

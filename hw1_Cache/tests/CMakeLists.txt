@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.10)
-
 enable_testing()
 
 find_package(GTest REQUIRED)
@@ -11,8 +9,8 @@ target_compile_definitions(test_lirs_cache PRIVATE TEST_DATA_DIR="${CMAKE_SOURCE
 target_link_libraries(
     test_lirs_cache 
     PRIVATE 
-    GTest::GTest 
-    GTest::Main 
+    GTest::gtest
+    GTest::gtest_main
     pthread
 )
 
