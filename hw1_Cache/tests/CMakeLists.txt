@@ -27,8 +27,8 @@ add_executable(test_belady_cache test_belady_cache.cpp)
 target_link_libraries(
     test_belady_cache 
     PRIVATE 
-    GTest::GTest 
-    GTest::Main 
+    GTest::gtest
+    GTest::gtest_main
     pthread
 )
 
