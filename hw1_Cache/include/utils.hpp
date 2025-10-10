@@ -2,12 +2,6 @@
 
 #include <vector>
 #include <cstddef>
-#include <cstdint>
-
-enum class CacheType : std::uint8_t {
-    LIRS = 0,
-    BELADY = 1
-};
 
 struct InputCacheData {
     size_t size_cache{0};
@@ -16,6 +10,7 @@ struct InputCacheData {
 };
 
 double slow_get_page(int key);
+
 void process_input(InputCacheData& ref_data);
 
 template<typename Cache, typename F>

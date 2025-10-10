@@ -8,6 +8,8 @@
 #include "utils.hpp"
 #include "lirs_cache.hpp"
 
+using namespace caches;
+
 namespace fs = std::filesystem;
 
 namespace {

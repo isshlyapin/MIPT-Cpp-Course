@@ -3,6 +3,8 @@
 
 #include "belady_cache.hpp"
 
+using namespace caches;
+
 // Заглушка "медленной" функции
 int slow_get_page(const int& key) {
     return key * 10;

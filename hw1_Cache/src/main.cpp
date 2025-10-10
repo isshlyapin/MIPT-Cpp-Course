@@ -23,10 +23,10 @@ int main(int argc, char** argv) {
 
     size_t n_hits = 0;
     if (cache_type == "lirs") {
-        LirsCache<double> cache(data.size_cache);
+        caches::LirsCache<double> cache(data.size_cache);
         n_hits = count_hits(cache, data.requests, slow_get_page);
     } else if (cache_type == "belady") {
-        BeladyCache<double> cache(data.size_cache, data.requests);
+        caches::BeladyCache<double> cache(data.size_cache, data.requests);
         n_hits = count_hits(cache, data.requests, slow_get_page);        
     } else {
         std::cerr << "Unknown type cache" << std::endl;
