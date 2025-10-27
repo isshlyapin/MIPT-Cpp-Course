@@ -1,6 +1,8 @@
-#include "../include/tree.hpp"
-#include <gtest/gtest.h>
 #include <string>
+
+#include <gtest/gtest.h>
+
+#include "tree.hpp"
 
 using namespace myds;
 

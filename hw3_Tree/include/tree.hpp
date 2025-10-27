@@ -74,6 +74,7 @@ public:
     }
   }
 
+  // Inorder обход с вызовом функции visit для каждого узла (const version)
   template<typename F>
   void inorder(F visit) const {
     const Node* node = left_most(root_);
@@ -207,7 +208,7 @@ public:
     return true;
   }
 
-  // first not less than key (i.e., key <= node)
+  // first not less than key
   Node* lower_bound(const KeyT& key) {
     Node* cur_node = root_;
     Node* res = nullptr;
@@ -249,7 +250,7 @@ public:
     return res;
   }
 
-  // first greater than key (i.e., key < node)
+  // first greater than key
   Node* upper_bound(const KeyT& key) {
     Node* cur_node = root_;
     Node* res = nullptr;
@@ -469,7 +470,7 @@ private:
     return p;
   }
 
-  // Поиск самого левого узла относительно заданного
+  // Поиск самого левого узла относительно заданного (const version)
   const Node* left_most(const Node* root) const {
     if (root == nullptr) { return nullptr; }
     const Node* res = root;
@@ -489,7 +490,7 @@ private:
     return res;
   }
 
-  // Поиск самого правого узла относительно заданного
+  // Поиск самого правого узла относительно заданного (const version)
   const Node* right_most(const Node* root) const {
     if (root == nullptr) { return nullptr; }
     const Node* res = root;
