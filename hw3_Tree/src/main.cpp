@@ -1,34 +1,39 @@
-#include <array>
-#include <fstream>
 #include <iostream>
-#include <string>
-#include <utility>
 
 #include "tree.hpp"
 
 int main() {
-  myds::ThreadedBinaryTree<int, std::string> tree;
-
-  const std::array<std::pair<int, const char*>, 7> entries = {
-    std::make_pair(8, "root"),
-    std::make_pair(4, "left"),
-    std::make_pair(12, "right"),
-    std::make_pair(2, "left-left"),
-    std::make_pair(6, "left-right"),
-    std::make_pair(10, "right-left"),
-    std::make_pair(14, "right-right")};
-
-  for (const auto& [key, label] : entries) {
-    static_cast<void>(tree.insert(key, std::string(label)));
+  myds::ThreadedBinaryTree<int, int> tree;
+  
+  char command = '\0';
+  
+  while (std::cin >> command) {
+    if (command == 'k') {
+      int key = 0;
+      std::cin >> key;
+      tree.insert(key, key);
+    } else if (command == 'q') {
+      int left_bound = 0;
+      int right_bound = 0;
+      std::cin >> left_bound >> right_bound;
+      
+      int count = 0;
+      // Если R <= L, то ответ 0
+      if (right_bound <= left_bound) {
+        count = 0;
+      } else {
+        // Находим первый элемент не меньше L
+        auto* start = tree.lower_bound(left_bound);
+        
+        // Находим первый элемент строго больше R
+        auto* end = tree.upper_bound(right_bound);
+        
+        // Вычисляем расстояние между ними
+        count = tree.distance(start, end);
+      }
+      std::cout << count << ' ';
+    }
   }
-
-  std::ofstream dot_file("tree.dot");
-  if (!dot_file) {
-    std::cerr << "Cannot open tree.dot for writing" << std::endl;
-    return 1;
-  }
-
-  tree.to_dot(dot_file);
-  std::cout << "DOT description stored in tree.dot" << std::endl;
+  
   return 0;
 }
