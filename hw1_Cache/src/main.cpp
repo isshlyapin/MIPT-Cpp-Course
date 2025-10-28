@@ -30,10 +30,10 @@ int main(int argc, char** argv) {
         size_t n_hits = 0;
         if (cache_type == "lirs") {
             caches::LirsCache<double> cache(data.size_cache);
-            n_hits = utils::count_hits(cache, data.requests, slow_get_page);
+            n_hits = utils::count_hits(cache, data.requests, utils::slow_get_page);
         } else if (cache_type == "belady") {
             caches::BeladyCache<double> cache(data.size_cache, data.requests);
-            n_hits = utils::count_hits(cache, data.requests, slow_get_page);        
+            n_hits = utils::count_hits(cache, data.requests, utils::slow_get_page);        
         }
         std::cout << n_hits << std::endl;
     } catch (const std::exception& e) {

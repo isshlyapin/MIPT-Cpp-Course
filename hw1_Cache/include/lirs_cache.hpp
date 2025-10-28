@@ -10,18 +10,104 @@
 
 namespace caches {
 
-template<typename KeyT>
-class LirsStack;
-
-template <typename PageT, typename KeyT = int>
-class LirsCache;
-
 enum class LirsType : std::uint8_t {
     LIR = 0,
     HIR = 1
 };
 
-template <typename PageT, typename KeyT>
+}
+
+namespace detail {
+
+using caches::LirsType;
+
+template <typename KeyT>
+class LirsStack {
+public:
+    using Entry       = typename std::pair<KeyT, LirsType>; 
+    using StackList   = typename std::list<Entry>;
+    using StackListIt = typename StackList::iterator;
+    using StackUMap   = typename std::unordered_map<KeyT, StackListIt>;
+
+    explicit LirsStack(size_t sz): sz_(sz) {}
+
+    void push(KeyT key, LirsType type = LirsType::HIR) {
+        if (size() == sz_) { handle_overflow(); }
+        push_entry(key, type);
+    }
+
+    void pop() {
+        assert(size());
+        erase_entry(stack_.back().first);
+        pruning();
+    }
+
+    size_t size() const {
+        return stack_.size();
+    }
+    
+    bool contains(KeyT key) const {
+        return stackHash_.contains(key);
+    }
+    
+    Entry bottom() const {
+        assert(size());
+        return stack_.back();
+    }
+    
+private:
+    void pruning() {
+        assert(size() && "Prune empty stack");
+        auto lastElement = bottom();
+        while (lastElement.second == LirsType::HIR) {
+            erase_entry(stack_.back().first);
+
+            assert(size() && "Absence of LIR entry in the stack");
+            
+            lastElement = bottom();
+        }
+    }
+    
+    void push_entry(KeyT key, LirsType type) {
+        auto hash_it = stackHash_.find(key);
+        if (hash_it != stackHash_.end()) {
+            stack_.erase(hash_it->second);
+            type = LirsType::LIR;
+        }
+        stack_.emplace_front(key, type);
+        stackHash_[key] = stack_.begin();
+        pruning();
+    }
+
+    void handle_overflow() {
+        auto it = std::ranges::find_if(stack_.rbegin(), stack_.rend(), 
+            [](auto x) { return x.second == LirsType::HIR; });
+
+        assert((it != stack_.rend()) && "The stack size is less than the LIRS part in the cache");
+
+        stackHash_.erase(it->first);
+        stack_.erase(std::next(it).base());
+    }
+
+    void erase_entry(KeyT key) {
+        auto hash_it = stackHash_.find(key);
+
+        assert((hash_it != stackHash_.end()) && "Key not found in stack during erase");
+
+        stack_.erase(hash_it->second);
+        stackHash_.erase(hash_it);
+    }
+    
+    size_t sz_;
+    StackList stack_;
+    StackUMap stackHash_;
+};
+
+} //namespace detail
+
+namespace caches {
+
+template <typename PageT, typename KeyT = int>
 class LirsCache {
 public:
     using Entry         = typename std::pair<KeyT, PageT>; 
@@ -50,16 +136,16 @@ public:
     template <typename F>
     bool lookup_update(KeyT key, F get_page) {
         if (is_hit_hot(key)) {
-            lirsStack_.move_to_front(key);
-            lirsStack_.pruning();
+            lirsStack_.push(key, LirsType::LIR);
             return true;
         }
         
         if (is_hit_cold(key)) {
             if (lirsStack_.contains(key)) {
+                lirsStack_.push(key, LirsType::LIR);
                 promote_to_hot(key);
             } else {
-                lirsStack_.push_front(key, LirsType::HIR);
+                lirsStack_.push(key);
                 move_to_front(coldCache_, coldHash_, key);
             }
             return true;
@@ -72,67 +158,52 @@ public:
 private:
     void handle_miss(KeyT key, PageT page) {
         if (hotCache_.size() < sz_hot_) {
-            add_to_cache(hotCache_, hotHash_, key, page, LirsType::LIR);
+            lirsStack_.push(key, LirsType::LIR);
+            add_to_cache(hotCache_, hotHash_, key, page);
             return;
         }
 
         if (coldCache_.size() < sz_cold_) {
-            add_to_cache(coldCache_, coldHash_, key, page, LirsType::HIR);
+            lirsStack_.push(key);
+            add_to_cache(coldCache_, coldHash_, key, page);
             return;
         }
 
         evict_cold();
+        
         if (lirsStack_.contains(key)) {
-            add_to_cache(coldCache_, coldHash_, key, page, LirsType::HIR);
+            lirsStack_.push(key, LirsType::LIR);
+            add_to_cache(coldCache_, coldHash_, key, page);
             promote_to_hot(key);
         } else {
-            add_to_cache(coldCache_, coldHash_, key, page, LirsType::HIR);
+            lirsStack_.push(key);
+            add_to_cache(coldCache_, coldHash_, key, page);
         }
     }
 
     void move_to_front(CacheList& cache, CacheUMap& hash_map, KeyT key) {
         auto hash_it = hash_map.find(key);
-        if (hash_it == hash_map.end()) {
-            throw std::invalid_argument("Key not found in cache");
-        }
-        auto cache_it = hash_it->second;
-        cache.splice(cache.begin(), cache, cache_it);
+        assert(hash_it != hash_map.end());
+
+        cache.splice(cache.begin(), cache, hash_it->second);
     }
 
     void promote_to_hot(KeyT key) {
-        if (!lirsStack_.contains(key)) {
-            throw std::logic_error("Key not found in LIRS stack during promotion");
-        }
-        lirsStack_.move_to_front(key);
-        lirsStack_.update_type(key, LirsType::LIR);
-
-        auto victim_hot = lirsStack_.bottom();
-        if (victim_hot.second != LirsType::LIR) {
-            throw std::logic_error("Bottom of stack is not LIR during promotion");
-        }
-        KeyT victim_hot_key = victim_hot.first;
-        lirsStack_.update_type(victim_hot_key, LirsType::HIR);
+        KeyT victim_key = lirsStack_.bottom().first;
         
-        lirsStack_.pruning();
+        lirsStack_.pop();
 
-        swap_cold_and_hot(key, victim_hot_key);
+        swap_cold_and_hot(key, victim_key);
     }
 
-    void add_to_cache(CacheList& cache, CacheUMap& hash_map, KeyT key, PageT page, LirsType type) {
-        if (lirsStack_.contains(key)) {
-            lirsStack_.move_to_front(key);
-        } else {
-            lirsStack_.push_front(key, type);
-        }
-        cache.push_front({key, page});
+    void add_to_cache(CacheList& cache, CacheUMap& hash_map, KeyT key, PageT page) {
+        cache.emplace_front(key, page);
+
         auto [it, ok] = hash_map.emplace(key, cache.begin());
-        if (!ok) { throw std::logic_error("Duplicate key in cache hash_map"); }
+        assert(ok);
     }
 
     void evict_cold() {
-        if (coldCache_.empty()) {
-            throw std::runtime_error("Cannot evict from empty cold cache");
-        }
         coldHash_.erase(coldCache_.back().first);
         coldCache_.pop_back();
     }
@@ -147,13 +218,11 @@ private:
 
     void move_from_to(CacheList& from_cache, CacheUMap& from_hash, CacheList& to_cache, CacheUMap& to_hash, KeyT key) {
         auto hash_it = from_hash.find(key);
-        if (hash_it == from_hash.end()) {
-            throw std::invalid_argument("Key not found in source cache");
-        }
-        to_cache.push_front(*(hash_it->second));
+        assert(hash_it != from_hash.end());
+
+        to_cache.splice(to_cache.begin(), from_cache, hash_it->second);
         auto [it, ok] = to_hash.emplace(key, to_cache.begin());
-        if (!ok) { throw std::logic_error("Duplicate key in destination cache"); }
-        from_cache.erase(hash_it->second);
+        assert(ok);
         from_hash.erase(key);
     }
 
@@ -168,124 +237,13 @@ private:
     size_t sz_hot_;
     size_t sz_cold_;
 
-    LirsStack<KeyT> lirsStack_;
+    detail::LirsStack<KeyT> lirsStack_;
 
     CacheList hotCache_;
     CacheUMap hotHash_;
 
     CacheList coldCache_;
     CacheUMap coldHash_;
-};
-
-template <typename KeyT>
-class LirsStack {
-public:
-    using Entry       = typename std::pair<KeyT, LirsType>; 
-    using StackList   = typename std::list<Entry>;
-    using StackListIt = typename StackList::iterator;
-    using StackUMap   = typename std::unordered_map<KeyT, StackListIt>;
-
-    explicit LirsStack(size_t sz): sz_(sz) {}
-
-    void pop_back() {
-        if (size() == 0) {
-            throw std::runtime_error("Cannot pop from empty stack");
-        }
-        KeyT key = stack_.back().first;
-        erase_entry(key);
-    }
-
-    size_t size() const {
-        return stack_.size();
-    }
-
-    void push_front(KeyT key, LirsType type) {
-        if (size() == sz_) { handle_overflow(); }
-        push_front_entry(key, type);
-    }
-
-    
-    bool contains(KeyT key) const {
-        return stackHash_.contains(key);
-    }
-    
-    void remove(KeyT key) {
-        if (!contains(key)) {
-            throw std::invalid_argument("Key not found in stack");
-        }
-        erase_entry(key);
-    }
-    
-    void update_type(KeyT key, LirsType newType) {
-        if (!contains(key)) {
-            throw std::invalid_argument("Key not found in stack");
-        }
-        auto it = stackHash_.find(key);
-        it->second->second = newType;
-    }
-    
-    void move_to_front(KeyT key) {
-        if (!contains(key)) {
-            throw std::invalid_argument("Key not found in stack");
-        }
-        auto it = stackHash_.find(key)->second;
-        stack_.splice(stack_.begin(), stack_, it);
-    }
-    
-    Entry top() const {
-        if (size() == 0) {
-            throw std::runtime_error("Cannot get top of empty stack");
-        }
-        return stack_.front();
-    }
-    
-    Entry bottom() const {
-        if (size() == 0) {
-            throw std::runtime_error("Cannot get bottom of empty stack");
-        }
-        return stack_.back();
-    }
-    
-    void pruning() {
-        if (size() == 0) {
-            throw std::runtime_error("Cannot prune empty stack");
-        }
-        auto lastElement = bottom();
-        while (lastElement.second == LirsType::HIR) {
-            pop_back();        
-            if (size() == 0) {
-                throw std::runtime_error("Stack became empty during pruning - invalid state");
-            }
-            lastElement = bottom();
-        }
-    }
-    
-    private:
-    void erase_entry(KeyT key) {
-        auto hash_it = stackHash_.find(key);
-        if (hash_it == stackHash_.end()) {
-            throw std::invalid_argument("Key not found in stack during erase");
-        }
-        stack_.erase(hash_it->second);
-        stackHash_.erase(hash_it);
-    }
-    
-    void push_front_entry(KeyT key, LirsType type) {
-        stack_.push_front({key, type});
-        auto [it, ok] = stackHash_.emplace(key, stack_.begin());
-        if (!ok) { throw std::logic_error("Duplicate key in stack"); }
-    }
-
-    void handle_overflow() {        
-        auto it = std::ranges::find_if(stack_.rbegin(), stack_.rend(), 
-            [](auto x) { return x.second == LirsType::HIR; });
-        stackHash_.erase(it->first);
-        stack_.erase(std::next(it).base());
-    }
-
-    size_t sz_;
-    StackList stack_;
-    StackUMap stackHash_;
 };
 
 }  // namespace caches
