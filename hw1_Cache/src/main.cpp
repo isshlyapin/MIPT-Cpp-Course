@@ -1,11 +1,11 @@
 #include <string>
 #include <iostream>
 
+#include "CLI/CLI.hpp"
+
 #include "utils.hpp"
 #include "lirs_cache.hpp"
 #include "belady_cache.hpp"
-
-#include "CLI/CLI.hpp"
 
 int main(int argc, char** argv) {
     CLI::App app{"Simulator caches"};
@@ -18,21 +18,28 @@ int main(int argc, char** argv) {
 
     CLI11_PARSE(app, argc, argv);
 
-    InputCacheData data;
-    process_input(data);
-
-    size_t n_hits = 0;
-    if (cache_type == "lirs") {
-        caches::LirsCache<double> cache(data.size_cache);
-        n_hits = count_hits(cache, data.requests, slow_get_page);
-    } else if (cache_type == "belady") {
-        caches::BeladyCache<double> cache(data.size_cache, data.requests);
-        n_hits = count_hits(cache, data.requests, slow_get_page);        
-    } else {
-        std::cerr << "Unknown type cache" << std::endl;
+    utils::InputCacheData data;
+    try {
+        utils::process_input(data);
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Input error: " << e.what() << std::endl;
         return 1;
     }
 
-    std::cout << n_hits << std::endl;
+    try {
+        size_t n_hits = 0;
+        if (cache_type == "lirs") {
+            caches::LirsCache<double> cache(data.size_cache);
+            n_hits = utils::count_hits(cache, data.requests, slow_get_page);
+        } else if (cache_type == "belady") {
+            caches::BeladyCache<double> cache(data.size_cache, data.requests);
+            n_hits = utils::count_hits(cache, data.requests, slow_get_page);        
+        }
+        std::cout << n_hits << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Cache error: " << e.what() << std::endl;
+        return 1;
+    }
+
     return 0;
 }

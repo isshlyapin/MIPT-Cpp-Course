@@ -31,7 +31,7 @@
     ```
 4. Перейдите в созданый образ
     ```bash
-    podman run -it <image_name>
+    podman run -it --rm --mount type=bind,source=./,target=/usr/src/myapp <image_name> bash
     ```
 5. Настройте conan
     ```bash

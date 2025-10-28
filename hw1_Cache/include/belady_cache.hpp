@@ -32,6 +32,10 @@ public:
     using CacheUMap  = typename std::unordered_map<KeyT, CacheMapIt>;
 
     BeladyCache(size_t sz, const std::vector<KeyT>& future_requests) : sz_(sz) {
+        if (sz_ <= 0) {
+          throw std::invalid_argument("Cache size must be greater than 0");
+        }
+        
         for (ssize_t i = future_requests.size() - 1; i >= 0; --i) {
             requests_data_[future_requests[i]].push_back(i);
         }

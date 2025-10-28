@@ -9,7 +9,6 @@ find_package(CLI11 REQUIRED)
 
 set(SOURCES
     src/main.cpp
-    src/utils.cpp
 )
 
 add_executable(cache ${SOURCES})

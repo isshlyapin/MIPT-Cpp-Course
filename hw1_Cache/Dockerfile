@@ -1,6 +1,5 @@
-FROM gcc:15.2.0
+FROM docker.io/gcc:15.2.0
 
-COPY . /usr/src/myapp
 WORKDIR /usr/src/myapp
 
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
