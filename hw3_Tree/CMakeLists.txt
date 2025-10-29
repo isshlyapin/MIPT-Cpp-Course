@@ -19,3 +19,8 @@ option(BUILD_TEST "Build tests" OFF)
 if (BUILD_TEST)
     add_subdirectory(test)
 endif()
+
+option(BUILD_BENCHMARK "Build benchmark" OFF)
+if (BUILD_BENCHMARK)
+    add_subdirectory(benchmark)
+endif()
