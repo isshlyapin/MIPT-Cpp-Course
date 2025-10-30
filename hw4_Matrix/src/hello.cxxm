@@ -1,0 +1,8 @@
+module;
+import std;
+
+export module hello_module;
+
+export void hello() {
+  std::cout << "Hello C++20 modules!!!" << std::endl;
+}
