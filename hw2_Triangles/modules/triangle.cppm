@@ -10,131 +10,20 @@ module;
 #include <algorithm>
 #include <stdexcept>
 
-export module triangle_intersection;
+import isshlyapin.line;
+import isshlyapin.point;
+import isshlyapin.plane;
+import isshlyapin.vector;
+import isshlyapin.config;
+import isshlyapin.line_segment;
 
-const double EPS = 1e-12;
+export module isshlyapin.triangle;
 
 namespace geometry {
 
-export struct Point2;
-export struct Vector2;
-export class  LineSegment2;
-export class  Triangle2;
-
-export struct Point3;
-export class  Vector3;
-export class  Line3;
-export class  LineSegment3;
-export class  Plane3;
-export class  Triangle3;
-
-bool point3_point3_intersects(const Point3& p1, const Point3& p2);
 Point2 project_point3_to_point2(const Point3& p, const Vector3& normal);
-export double scalar_triple_product(const Vector3& v1, const Vector3& v2, const Vector3& v3);
 
-struct Point2 {
-    Point2(double x = 0, double y = 0) : x{x}, y{y} {}
-
-    double x, y;
-};
-
-struct Vector2 {
-    Vector2(double x = 0, double y = 0) : x{x}, y{y} {}
-    
-    Vector2(const Point2& p1, const Point2& p2) : Vector2(p2.x - p1.x, p2.y - p1.y) {}
-    
-    Vector2(const Point2& p) : Vector2(p.x, p.y) {}
-
-    double dot(const Vector2& other_v) const {
-        return (x * other_v.x) + (y * other_v.y);
-    }
-
-    double cross(const Vector2& other_v) const {
-        return (x * other_v.y) - (y * other_v.x);
-    }
-
-    double length() const {
-        return std::sqrt((x * x) + (y * y));
-    }
-
-    double length_square() const {
-        return (x * x) + (y * y);
-    }
-
-    double x, y;
-};
-
-class LineSegment2 {
-public:
-    LineSegment2(const Point2& p1, const Point2& p2) : points_{p1, p2} {}
-
-    enum class Type : std::uint8_t {
-        LineSegment = 0,
-        Point = 1
-    };
-
-    bool is_degenerate() const {
-        return std::fabs(points_[0].x - points_[1].x) < EPS &&
-               std::fabs(points_[0].y - points_[1].y) < EPS;
-    }
-
-    Type get_type() const {
-        if (is_degenerate()) { return Type::Point; } 
-        return Type::LineSegment;
-    }
-
-    bool contains_point(const Point2& r) const {
-        const Point2& p = points_[0];
-        const Point2& q = points_[1];
-
-        const Vector2 v1{r, p};
-        const Vector2 v2{r, q};
-        if (std::fabs(v1.cross(v2)) > EPS) { return false; }
-
-        return std::min(p.x, q.x) - EPS < r.x && r.x < std::max(p.x, q.x) + EPS &&
-               std::min(p.y, q.y) - EPS < r.y && r.y < std::max(p.y, q.y) + EPS;
-    }
-
-    bool intersects(const LineSegment2& other_ls) const {
-        const Point2& a = points_[0];
-        const Point2& b = points_[1];
-        const Point2& c = other_ls.get_point(0);
-        const Point2& d = other_ls.get_point(1);
-
-        auto cross = [](const Point2& p1, const Point2& p2, const Point2& p3) {
-            return ((p2.x - p1.x) * (p3.y - p1.y)) - ((p2.y - p1.y) * (p3.x - p1.x));
-        };
-
-        const double d1 = cross(a, b, c);
-        const double d2 = cross(a, b, d);
-        const double d3 = cross(c, d, a);
-        const double d4 = cross(c, d, b);
-
-        if (((d1 > EPS && d2 < -EPS) || (d1 < -EPS && d2 > EPS)) &&
-            ((d3 > EPS && d4 < -EPS) || (d3 < -EPS && d4 > EPS))) {
-            return true;
-        }
-
-        if (std::fabs(d1) < EPS && contains_point(c))          { return true; }
-        if (std::fabs(d2) < EPS && contains_point(d))          { return true; }
-        if (std::fabs(d3) < EPS && other_ls.contains_point(a)) { return true; }
-        if (std::fabs(d4) < EPS && other_ls.contains_point(b)) { return true; }
-        
-        return false;
-    }
-
-    const Point2& get_point(int index) const {
-        return points_.at(index);
-    }
-
-    const auto& get_points() const {
-        return points_;
-    }
-private:
-    std::array<Point2, 2> points_;
-};
-
-class Triangle2 {
+export class Triangle2 {
 public:
     Triangle2(const Point2& p1, const Point2& p2, const Point2& p3)
       : points_{p1, p2, p3} {}
@@ -253,268 +142,7 @@ private:
     std::array<Point2, 3> points_;
 };
 
-struct Point3 {
-    double x{0}, y{0}, z{0};
-};
-
-struct Vector3 {
-    Vector3(double x = 0, double y = 0, double z = 0)
-      : x(x), y(y), z(z) {}
-
-    Vector3(const Point3& p) : Vector3(p.x, p.y, p.z) {}
-
-    Vector3(const Point3& p1, const Point3& p2) 
-      : Vector3(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z) {}
-        
-    Vector3 cross(const Vector3& other_v) const {
-        Vector3 res_v{
-            (y * other_v.z) - (z * other_v.y),
-            (z * other_v.x) - (x * other_v.z),
-            (x * other_v.y) - (y * other_v.x)
-        };
-
-        return res_v; 
-    }
-
-    const Vector3& scale(double scl) {
-        x *= scl;
-        y *= scl;
-        z *= scl;
-
-        return *this;
-    }
-
-    double dot(const Vector3& other_v) const {
-        return (x * other_v.x) + (y * other_v.y) + (z * other_v.z);
-    }
-
-    double length() const {
-        return std::sqrt((x * x) + (y * y) + (z * z));
-    }
-
-    double length_square() const {
-        return (x * x) + (y * y) + (z * z);
-    }
-
-    Vector3 operator+(const Vector3& other) const {
-        return {x + other.x, y + other.y, z + other.z};
-    }
-
-    Vector3 operator-(const Vector3& other) const {
-        return {x - other.x, y - other.y, z - other.z};
-    }
-
-    Vector3& operator+=(const Vector3& other) {
-        x += other.x;
-        y += other.y;
-        z += other.z;
-        return *this;
-    }
-
-    Vector3& operator-=(const Vector3& other) {
-        x -= other.x;
-        y -= other.y;
-        z -= other.z;
-        return *this;
-    }
-    
-    double x, y, z;
-};
-
-class Line3 {
-public:
-    Line3(const Vector3& v, const Point3& p) : d_(p), dir_(v) {
-        if (v.length() < EPS) {
-            throw std::invalid_argument("Degenerate direction");
-        }
-    }
-
-    std::optional<Point3> intersects(const Line3& other_l) const {
-        const Vector3 d1d2{d_, other_l.get_d()};
-
-        if (std::fabs(scalar_triple_product(dir_, other_l.get_dir(), d1d2)) > EPS) {
-            return std::nullopt;
-        }
-
-        if (dir_.cross(other_l.get_dir()).length() < EPS) {
-            if (dir_.cross(d1d2).length() > EPS) {
-                return std::nullopt;
-            }
-            return d_;
-        }
-
-        Vector3 u = dir_;
-        const Vector3 v = other_l.get_dir();
-        const Point3 p1 = d_;
-        const Point3 p2 = other_l.get_d();
-
-        const Vector3 n = u.cross(v);
-        const Vector3 w{p1, p2};
-
-        const double t = w.cross(v).dot(n) / n.dot(n);
-
-        const Vector3 res = Vector3{p1} + u.scale(t);
-
-        return Point3{.x=res.x, .y=res.y, .z=res.z};
-    }
-
-    const Point3& get_d() const {
-        return d_;
-    }
-
-    const Vector3& get_dir() const {
-        return dir_;
-    }
-
-private:
-    Point3 d_;
-    Vector3 dir_;
-};
-
-class LineSegment3 {
-    public:
-    LineSegment3(const Point3& p1, const Point3& p2) : points_{p1, p2} {}
-
-    enum class Type : std::uint8_t {
-        LineSegment = 0,
-        Point = 1
-    };
-
-    bool is_degenerate() const {
-        return std::fabs(points_[0].x - points_[1].x) < EPS &&
-               std::fabs(points_[0].y - points_[1].y) < EPS &&
-               std::fabs(points_[0].z - points_[1].z) < EPS;
-    }
-
-    Type get_type() const {
-        if (is_degenerate()) { return Type::Point; } 
-        return Type::LineSegment;
-    }
-
-    bool contains_point(const Point3& r) const {
-        const Point3& p = points_[0];
-        const Point3& q = points_[1];
-
-        const Vector3 v1{r, p};
-        const Vector3 v2{r, q};
-        if (v1.cross(v2).length() > EPS) { return false; }
-
-        return is_point_in_box(r);
-    }
-
-    bool intersects(const LineSegment3& other_ls) const {
-        if (is_degenerate() || other_ls.is_degenerate()) {
-            return degenerate_intersects(other_ls);
-        }
-        const Line3 l1{
-            Vector3{points_[0], points_[1]}, 
-            points_[0]
-        };
-        
-        const Line3 l2{
-            Vector3{other_ls.get_point(0), other_ls.get_point(1)}, 
-            other_ls.get_point(0)
-        };
-
-        auto intersect = l1.intersects(l2);
-        if (intersect) {
-            return is_point_in_box(intersect.value()) &&
-                   other_ls.is_point_in_box(intersect.value());
-        }
-        
-        return false;
-    }
-    
-    bool is_point_in_box(const Point3& p) const {
-        auto in_range = [](double v, double a, double b) {
-            return std::min(a, b) - EPS < v && v < std::max(a, b) + EPS;
-        };
-
-        return in_range(p.x, points_[0].x, points_[1].x) &&
-               in_range(p.y, points_[0].y, points_[1].y) &&
-               in_range(p.z, points_[0].z, points_[1].z);
-    }
-
-    LineSegment2 project_to_2d(const Vector3& normal) const {
-        // Выбираем ось с максимальным влиянием в нормали
-        const double ax = std::fabs(normal.x);
-        const double ay = std::fabs(normal.y);
-        const double az = std::fabs(normal.z);
-
-        std::array<Point2, 2> projections;
-        if (ax > ay && ax > az) {
-            // отбросить X → остаются (y, z)
-            projections[0] = Point2{points_[0].y, points_[0].z};
-            projections[1] = Point2{points_[1].y, points_[1].z};
-        } else if (ay > ax && ay > az) {
-            // отбросить Y → остаются (x, z)
-            projections[0] = Point2{points_[0].x, points_[0].z};
-            projections[1] = Point2{points_[1].x, points_[1].z};
-        } else {
-            // отбросить Z → остаются (x, y)
-            projections[0] = Point2{points_[0].x, points_[0].y};
-            projections[1] = Point2{points_[1].x, points_[1].y};
-        }
-
-        return LineSegment2{projections[0], projections[1]};
-    } 
-
-    double length() const {
-        return Vector3{points_[0], points_[1]}.length();
-    }
-
-    const Point3& get_point(int index) const {
-        return points_.at(index);
-    }
-
-    const auto& get_points() const {
-        return points_;
-    }
-    
-private:
-    bool degenerate_intersects(const LineSegment3& other_ls) const {
-        if (get_type() == Type::LineSegment && other_ls.get_type() == Type::Point) {
-            return contains_point(other_ls.get_point(0));
-        }
-        if (get_type() == Type::Point && other_ls.get_type() == Type::LineSegment) {
-            return other_ls.contains_point(points_[0]);            
-        }
-        return point3_point3_intersects(points_[0], other_ls.get_point(0));
-    }
-
-    std::array<Point3, 2> points_;
-};
-
-class Plane3 {
-public:
-    Plane3(Point3 p1, Point3 p2, Point3 p3) {
-        Vector3 vec1{p1, p2};
-        Vector3 vec2{p1, p3};
-
-        normal = vec1.cross(vec2);
-        d = - normal.dot(Vector3{p1});
-    }
-
-    Plane3(const Vector3& v, double d = 0) : normal{v}, d{d} {}
-
-    bool is_valid() const {
-        return normal.length() > EPS;
-    }
-
-    double distance_to_point(const Point3& p) const {
-        return normal.dot(p) + d;
-    }
-
-    const Vector3& get_normal() const {
-        return normal;
-    }
-
-private:
-    double d;
-    Vector3 normal;
-};
-
-class Triangle3 {
+export class Triangle3 {
 public:
     Triangle3(const Point3& p1, const Point3& p2, const Point3& p3)
       : plane_(p1, p2, p3), points_{p1, p2, p3} {}
@@ -595,7 +223,7 @@ public:
                     ls.get_point(1)
                 }.scale(std::fabs(d1)/(std::fabs(d1) + std::fabs(d2)));
             
-            return intersects(Point3{.x=intersection_vec.x, .y=intersection_vec.y, .z=intersection_vec.z});
+            return intersects(Point3{intersection_vec.x, intersection_vec.y, intersection_vec.z});
         }
         if (std::fabs(d1) < EPS && std::fabs(d2) < EPS) {
             const Triangle2    tri2 = project_to_2d(plane_.get_normal());
@@ -677,7 +305,7 @@ private:
                 return other_t.intersects(points_[0]);
             }
             if (other_t.get_type() == Type::Point) {
-                return point3_point3_intersects(points_[0], other_t.get_point(0));
+                return points_[0] == other_t.get_point(0);
             }
 
             return other_t.degenerate_segment().contains_point(points_[0]);
@@ -698,7 +326,7 @@ private:
     }
 
     LineSegment3 degenerate_segment() const {
-        LineSegment3 max_ls{Point3{.x=0, .y=0 ,.z=0}, Point3{.x=0, .y=0, .z=0}};
+        LineSegment3 max_ls{Point3{}, Point3{}};
         double max_length = 0;
         for (int i = 0; i < 3; ++i) {
             const LineSegment3 ls{points_.at(i), points_.at((i+i)%3)};
@@ -838,15 +466,5 @@ Point2 project_point3_to_point2(const Point3& p, const Vector3& normal) {
         return Point2{p.x, p.y};
     }
 }
-
-bool point3_point3_intersects(const Point3& p1, const Point3& p2) {
-    return Vector3{p1, p2}.length() < EPS;
-}
-
- double scalar_triple_product(const Vector3& v1, const Vector3& v2, const Vector3& v3) {
-    return (v1.x * (v2.y * v3.z - v2.z * v3.y)) -
-           (v1.y * (v2.x * v3.z - v2.z * v3.x)) +
-           (v1.z * (v2.x * v3.y - v2.y * v3.x));
- }
 
 } // namespace geometry

@@ -1,42 +1,27 @@
-#include <set>
-#include <array>
-#include <vector>
+#include <ranges>
 #include <iostream>
 
-import triangle_intersection;
+import isshlyapin.triangle;
+import isshlyapin.intersection;
 
 int main() {
-    // Input data
-    int N = 0;
-    std::cin >> N;
+    try {
+        auto triangles = load_triangles();
+        auto intersections = find_intersections(triangles);
 
-    std::vector<geometry::Triangle3> triangles;
-    for (int i = 0; i < N; ++i) {
-        std::array<geometry::Point3, 3> points;
-        for (int j = 0; j < 3; ++j) {
-            double x{0}; double y{0}; double z{0};
-            std::cin >> x >> y >> z;
-            points.at(j) = geometry::Point3{.x=x, .y=y, .z=z};
-        }
-        triangles.emplace_back(points[0], points[1], points[2]);
-    }
-
-    // Main cycle
-    std::set<int> intersects;
-    for (int i = 0; i < N; ++i) {
-        if (intersects.contains(i)) { continue; }        
-        for (int j = 0; j < N; ++j) {
-            if (i == j) { continue;} 
-            if (triangles.at(i).intersects(triangles.at(j))) {
-                intersects.insert(i);
-                intersects.insert(j);
-                break;
+        // Output results
+        for (size_t idx = 0, sz = intersections.size(); idx < sz; ++idx) {
+            if (intersections[idx]) {
+                std::cout << idx << '\n';
             }
         }
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Input error: " << e.what() << std::endl;
+        return 1;
+    } catch (const std::exception& e) {
+        std::cerr << "Unknown error: " << e.what() << std::endl;
+        return 1;
     }
 
-    // Output results
-    for (auto id: intersects) {
-        std::cout << id << '\n';        
-    }
+    return 0;
 }

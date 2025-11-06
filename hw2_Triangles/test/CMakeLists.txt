@@ -37,7 +37,7 @@ add_executable(test_triangle_intersection
 
 target_link_libraries(test_triangle_intersection 
     PRIVATE Catch2::Catch2WithMain
-    PRIVATE triangle_intersection_lib
+    PRIVATE geometry
 )
 
 include(CTest)

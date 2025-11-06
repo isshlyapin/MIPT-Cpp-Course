@@ -1,7 +1,10 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-import triangle_intersection;
+import isshlyapin.triangle;
+import isshlyapin.point;
+import isshlyapin.line;
+import isshlyapin.line_segment;
 
 using Catch::Approx;
 using namespace geometry;
