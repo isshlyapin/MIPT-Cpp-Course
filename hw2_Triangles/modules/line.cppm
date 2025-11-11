@@ -4,11 +4,11 @@ module;
 #include <optional>
 #include <stdexcept>
 
+export module isshlyapin.line;
+
 import isshlyapin.point;
 import isshlyapin.vector;
 import isshlyapin.config;
-
-export module isshlyapin.line;
 
 namespace geometry {
 

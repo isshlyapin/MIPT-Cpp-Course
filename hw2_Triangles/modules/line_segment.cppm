@@ -5,12 +5,13 @@ module;
 #include <cstdint>
 #include <algorithm>
 
+
+export module isshlyapin.line_segment;
+
 import isshlyapin.line;
 import isshlyapin.point;
 import isshlyapin.vector;
 import isshlyapin.config;
-
-export module isshlyapin.line_segment;
 
 namespace geometry {
 

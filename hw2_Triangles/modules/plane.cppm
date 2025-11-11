@@ -2,11 +2,11 @@ module;
 
 #include <stdexcept>
 
+export module isshlyapin.plane;
+
 import isshlyapin.point;
 import isshlyapin.vector;
 import isshlyapin.config;
-
-export module isshlyapin.plane;
 
 namespace geometry {
 

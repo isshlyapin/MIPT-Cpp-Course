@@ -10,14 +10,14 @@ module;
 #include <algorithm>
 #include <stdexcept>
 
+export module isshlyapin.triangle;
+
 import isshlyapin.line;
 import isshlyapin.point;
 import isshlyapin.plane;
 import isshlyapin.vector;
 import isshlyapin.config;
 import isshlyapin.line_segment;
-
-export module isshlyapin.triangle;
 
 namespace geometry {
 
@@ -329,7 +329,7 @@ private:
         LineSegment3 max_ls{Point3{}, Point3{}};
         double max_length = 0;
         for (int i = 0; i < 3; ++i) {
-            const LineSegment3 ls{points_.at(i), points_.at((i+i)%3)};
+            const LineSegment3 ls{points_.at(i), points_.at((i+1)%3)};
             const double ls_length = ls.length();
             if (ls_length > max_length) {
                 max_ls = ls;

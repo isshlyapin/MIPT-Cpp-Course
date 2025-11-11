@@ -2,9 +2,9 @@ module;
 
 #include <cmath>
 
-import isshlyapin.point;
-
 export module isshlyapin.vector;
+
+import isshlyapin.point;
 
 namespace geometry {
 
