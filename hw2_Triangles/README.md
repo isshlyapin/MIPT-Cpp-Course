@@ -33,7 +33,7 @@
     ```
 2. Запуск тестов
     ```bash
-    ctest --test-dir build/tests
+    ctest --test-dir build/test
     ```
 
 ### Входные данные:
