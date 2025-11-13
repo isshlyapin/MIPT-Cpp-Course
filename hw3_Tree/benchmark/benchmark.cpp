@@ -125,9 +125,9 @@ static void BM_TreeRangeQuery(benchmark::State& state) {
     for (auto _ : state) {
         size_t total = 0;
         for (const auto& [a, b] : queries) {
-            auto* it_low = tree.lower_bound(a);
-            auto* it_up  = tree.upper_bound(b);
-            total += tree.distance(it_low, it_up);
+            auto it_low = tree.lower_bound(a);
+            auto it_up  = tree.upper_bound(b);
+            total += std::distance(it_low, it_up);
         }
         benchmark::DoNotOptimize(total);
     }
