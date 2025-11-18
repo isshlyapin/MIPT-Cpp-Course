@@ -250,3 +250,98 @@ TEST(ThreadedBinaryTree, RemoveRootWithRightSubtree) {
     }
     EXPECT_EQ(keys, (std::vector<int>{5, 12, 15}));
 }
+
+TEST(ThreadedBinaryTree, SizeEmpty) {
+    ThreadedBinaryTree<int, std::string> tree;
+    
+    // Пустое дерево
+    EXPECT_EQ(tree.size(), 0);
+    EXPECT_TRUE(tree.empty());
+    
+    // Добавляем один элемент
+    tree.insert(5, "five");
+    EXPECT_EQ(tree.size(), 1);
+    EXPECT_FALSE(tree.empty());
+    
+    // Добавляем еще элементы
+    tree.insert(3, "three");
+    tree.insert(7, "seven");
+    EXPECT_EQ(tree.size(), 3);
+    EXPECT_FALSE(tree.empty());
+    
+    // Попытка добавить дубликат не должна изменить размер
+    tree.insert(5, "five again");
+    EXPECT_EQ(tree.size(), 3);
+    EXPECT_FALSE(tree.empty());
+    
+    // Удаляем элемент
+    tree.remove(3);
+    EXPECT_EQ(tree.size(), 2);
+    EXPECT_FALSE(tree.empty());
+    
+    // Удаляем все элементы
+    tree.remove(5);
+    tree.remove(7);
+    EXPECT_EQ(tree.size(), 0);
+    EXPECT_TRUE(tree.empty());
+    
+    // Попытка удалить несуществующий элемент
+    tree.remove(42);
+    EXPECT_EQ(tree.size(), 0);
+    EXPECT_TRUE(tree.empty());
+}
+
+TEST(ThreadedBinaryTree, SizeAfterMultipleOperations) {
+    ThreadedBinaryTree<int, int> tree;
+    
+    // Вставляем много элементов
+    for (int i = 0; i < 100; ++i) {
+        tree.insert(i, i * 10);
+    }
+    EXPECT_EQ(tree.size(), 100);
+    EXPECT_FALSE(tree.empty());
+    
+    // Удаляем половину
+    for (int i = 0; i < 50; ++i) {
+        tree.remove(i);
+    }
+    EXPECT_EQ(tree.size(), 50);
+    EXPECT_FALSE(tree.empty());
+    
+    // Удаляем оставшиеся
+    for (int i = 50; i < 100; ++i) {
+        tree.print();
+        tree.remove(i);
+    }
+    EXPECT_EQ(tree.size(), 0);
+    EXPECT_TRUE(tree.empty());
+}
+
+TEST(ThreadedBinaryTree, SizeAfterCopyAndMove) {
+    ThreadedBinaryTree<int, std::string> tree;
+    tree.insert(1, "one");
+    tree.insert(2, "two");
+    tree.insert(3, "three");
+    
+    EXPECT_EQ(tree.size(), 3);
+    
+    // Копирование
+    ThreadedBinaryTree<int, std::string> copy(tree);
+    EXPECT_EQ(copy.size(), 3);
+    EXPECT_EQ(tree.size(), 3); // Оригинал не изменился
+    
+    // Перемещение
+    ThreadedBinaryTree<int, std::string> moved(std::move(copy));
+    EXPECT_EQ(moved.size(), 3);
+    
+    // Присваивание копированием
+    ThreadedBinaryTree<int, std::string> assigned;
+    assigned = tree;
+    EXPECT_EQ(assigned.size(), 3);
+    EXPECT_EQ(tree.size(), 3);
+    
+    // Присваивание перемещением
+    ThreadedBinaryTree<int, std::string> move_assigned;
+    move_assigned = std::move(assigned);
+    EXPECT_EQ(move_assigned.size(), 3);
+}

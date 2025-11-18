@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 #include "tree.hpp"
 #include "range_query.hpp"

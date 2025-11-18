@@ -3,6 +3,7 @@
 #include <vector>
 #include <cassert>
 #include <utility>
+#include <iostream>
 #include <stdexcept>
 #include <functional>
 #include <unordered_map>
@@ -138,7 +139,10 @@ public:
   ThreadedBinaryTree() : root_(nullptr), comp_(), size_(0) {}
 
   ThreadedBinaryTree(ThreadedBinaryTree&& rhs) noexcept 
-    : root_(rhs.root_), comp_(rhs.comp_), size_(rhs.size_) {}
+    : root_(rhs.root_), comp_(rhs.comp_), size_(rhs.size_) {
+    rhs.root_ = nullptr;
+    rhs.size_ = 0;
+  }
 
   ThreadedBinaryTree(const ThreadedBinaryTree& rhs) 
     : root_(rhs.copy()), comp_(rhs.comp_), size_(rhs.size_) {}
@@ -170,6 +174,10 @@ public:
     return size_;
   }
 
+  bool empty() const {
+    return size_ == 0;
+  }
+
   iterator begin() { return iterator(left_most(root_), root_); }
   iterator end() { return iterator(nullptr, root_); }
 
@@ -191,8 +199,8 @@ public:
   ValueT& operator[](const KeyT& key) {
     Node* node = find_node(key);
     if (node == nullptr) {
-      insert(key, ValueT{});
-      node = find_node(key);
+      auto [it, ok] = insert(key, ValueT{});
+      return it->second;
     }
     return node->data.second;
   }
@@ -273,6 +281,7 @@ public:
       return false;
     }
 
+    Node* balance_start = nullptr;
     if (tnode->right_th) {
       if (tnode->left_th) {
         if (tnode->parent == nullptr) {
@@ -297,6 +306,7 @@ public:
           tnode->left->right = tnode->right;
         }
       }
+      balance_start = tnode->parent;
     } else {
       Node* rmin_node = extract_min(tnode->right);
       
@@ -322,11 +332,14 @@ public:
       } else if (tnode == tparent->right) {
         tparent->right = rmin_node;
       }
-      fix_balance_up(rmin_node);
-    }
-
+      balance_start = rmin_node;
+    } 
+     
+    fix_balance_up(balance_start);
+    
     delete tnode;
-
+    --size_;
+  
     return true;
   }
 
@@ -351,6 +364,10 @@ public:
   }
 
 private:
+  // Константы для балансировки AVL-дерева
+  static constexpr int BALANCE_THRESHOLD_RIGHT = 2;   // Правое поддерево слишком высокое
+  static constexpr int BALANCE_THRESHOLD_LEFT = -2;   // Левое поддерево слишком высокое
+
   // Обобщенный поиск границы (lower_bound или upper_bound)
   // upper = false: lower_bound (первый >= key)
   // upper = true:  upper_bound (первый > key)
@@ -561,13 +578,13 @@ private:
 
   Node* balance(Node* p) {
     fixheight(p);
-    if (bfactor(p) == 2) {
+    if (bfactor(p) == BALANCE_THRESHOLD_RIGHT) {
       if (bfactor(p->right) < 0) {
         p->right = rotate_right(p->right);
       }
       return rotate_left(p);
     }
-    if (bfactor(p) == -2) {
+    if (bfactor(p) == BALANCE_THRESHOLD_LEFT) {
       if(bfactor(p->left) > 0) {
         p->left = rotate_left(p->left);
       }
