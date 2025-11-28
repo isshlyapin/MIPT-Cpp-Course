@@ -1,0 +1,107 @@
+module;
+
+#include <cstddef>
+
+export module linal:matrix;
+
+import std;
+import :vector;
+
+namespace linal {
+
+export
+template<typename T>
+class Matrix {
+public:
+  Matrix(size_t rows, size_t cols, const T& val = T{}) {
+    data_.resize(rows);
+    for (size_t i{0}; i < rows; ++i) {
+      data_[i].reserve(cols);
+      for (size_t j{0}; j < cols; ++j) { data_[i].push(val); }
+    }
+  }
+
+  template<typename FwdIt>
+  Matrix(size_t rows, size_t cols, FwdIt start, FwdIt finish) {
+    data_.resize(rows);
+    for (size_t i{0}; i < rows; ++i) {
+      data_[i].reserve(cols);
+      for (size_t j{0}; j < cols; ++j) {
+        if (start != finish) {
+          data_[i].push(*start);
+          ++start;          
+        } else {
+          data_[i].push(T{});
+        }
+      }
+    }
+  }
+  
+  const Vector<T>& operator[](size_t idx) const noexcept {
+    return data_[idx];
+  }
+  
+  Vector<T>& operator[](size_t idx) noexcept {
+    return const_cast<Vector<T>&>(static_cast<const Matrix&>(*this)[idx]);
+  }
+
+  [[nodiscard]] double determinant() const {
+    // Матрица должна быть квадратной
+    size_t n = data_.size();
+    if (n == 0) { return 1.0; } // det(0×0) = 1
+
+    // Предполагаем, что ВСЕ строки имеют одинаковый размер
+    // (иначе это не матрица)
+    if (data_[0].size() != n) {
+        throw std::logic_error("Matrix must be square for determinant()");
+    }
+    
+    // Копируем матрицу, т.к. будем её модифицировать
+    Matrix<T> tmp(*this);
+    double det = 1.0;
+    int sign = 1;
+
+    for (size_t i = 0; i < n; ++i) {
+      // --- Выбор главного элемента (partial pivoting) ---
+      size_t pivot = i;
+      T max_val = std::abs(tmp[pivot][i]);
+
+      for (size_t r = i + 1; r < n; ++r) {
+        T v = std::abs(tmp[r][i]);
+        if (v > max_val) {
+          max_val = v;
+          pivot = r;
+        }
+      }
+
+      // Если главный элемент ~0 → детерминант = 0
+      if (max_val == T{}) { return 0.0; }
+
+      // --- Если pivot не на месте — меняем строки ---
+      std::swap(tmp[i], tmp[pivot]);
+      sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
+
+      // --- Прямой ход Гаусса ---
+      const T& diag = tmp[i][i];
+      for (size_t r = i + 1; r < n; ++r) {
+          const T& factor = tmp[r][i] / diag;
+          tmp[r][i] = T{}; // элемент под диагональю станет 0
+
+          for (size_t c = i + 1; c < n; ++c) {
+              tmp[r][c] -= factor * tmp[i][c];
+          }
+      }
+
+      // Диагональные элементы перемножаются
+      det *= static_cast<double>(diag);
+    }
+
+    return det * sign;
+  }
+
+
+private:
+  Vector<Vector<T>> data_;
+};
+  
+} // namespace linal

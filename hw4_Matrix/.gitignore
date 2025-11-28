@@ -1,2 +1,4 @@
-build/
+.cache
+build
 CMakeUserPresets.json
+compile_commands.json

@@ -10,7 +10,11 @@ podman run -it --mount type=bind,source=./,target=/workspace isshlyapin/ubuntu_c
 ```
 
 ```bash
-uv run conan build . --build=missing -s build_type=Release -pr:a clang21
+cd workspace
+```
+
+```bash
+conan build . --build=missing -s build_type=Release -pr:a clang21
 ```
 
 ## Запуск

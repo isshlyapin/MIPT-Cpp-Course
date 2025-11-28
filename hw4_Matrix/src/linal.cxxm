@@ -1,0 +1,4 @@
+export module linal;
+
+export import :vector;
+export import :matrix;

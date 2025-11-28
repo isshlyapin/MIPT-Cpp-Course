@@ -1,0 +1,166 @@
+module;
+
+#include <cstddef>
+#include <cassert>
+
+export module linal:vector;
+
+import std;
+
+namespace linal {
+
+template <typename T> 
+void myconstruct(T *p, const T &rhs) { ::new (p) T(rhs); }
+
+template <typename T> 
+void myconstruct(T *p, T &&rhs) { ::new (p) T(std::move(rhs)); }
+
+template<class T>
+void mydestroy(T* ptr) { ptr->~T(); }
+
+template<typename  FwdIt>
+void mydestroy(FwdIt start, FwdIt finish) noexcept {
+  for (; start != finish; ++start) { mydestroy(&*start); }
+}
+
+template<typename T>
+struct VectorBuf {
+protected:
+  explicit VectorBuf(size_t sz = 0) 
+   : data_((sz == 0) ? nullptr : static_cast<T*>(::operator new(sizeof(T) * sz))), size_(sz), used_(0) {}
+
+  VectorBuf(const VectorBuf& rhs) = delete;
+  VectorBuf& operator=(const VectorBuf& rhs) = delete;
+
+  VectorBuf(VectorBuf&& rhs) noexcept : VectorBuf() { swap(rhs); }
+
+  VectorBuf& operator=(VectorBuf&& rhs) noexcept {
+    if (&rhs != this) { swap(rhs); }
+    return *this;
+  }
+
+  ~VectorBuf() {
+    mydestroy(data_, data_ + used_);
+    ::operator delete(data_);
+  }
+
+private:
+  void swap(VectorBuf& rhs) noexcept {
+    std::swap(data_, rhs.data_);
+    std::swap(size_, rhs.size_);
+    std::swap(used_, rhs.used_);
+  }
+
+protected:
+  T* data_;
+  size_t size_;
+  size_t used_;
+};
+
+export 
+template<typename T>
+class Vector : private VectorBuf<T> {
+private:
+  using VectorBuf<T>::data_;
+  using VectorBuf<T>::size_;
+  using VectorBuf<T>::used_;
+
+public:
+  explicit Vector(size_t sz = 0) : VectorBuf<T>(sz) {}
+
+  Vector(Vector&& rhs) noexcept = default;
+  Vector& operator=(Vector&& rhs) noexcept = default;
+
+  Vector(const Vector& rhs) : VectorBuf<T>(rhs.size_) {
+    for (; used_ < rhs.used_; ++used_) {
+      myconstruct(data_ + used_, rhs.data_[used_]);
+    }
+  }
+
+  Vector& operator=(const Vector& rhs) {
+    if (&rhs != this) {
+      Vector tmp{rhs};
+      std::swap(*this, tmp);
+    }
+    return *this;
+  }
+
+  ~Vector() = default;
+  
+  const T& operator[](size_t idx) const {
+    return data_[idx];
+  }
+
+  T& operator[](size_t idx) { return const_cast<T&>(static_cast<const Vector&>(*this)[idx]); }
+  
+  void push(const T& new_entry) {
+    T new_entry2{new_entry};
+    push(std::move(new_entry2));
+  }
+
+  void push(T&& new_entry) {
+    if (size_ == used_) { grow(); }
+
+    ::new(data_ + used_) T(std::move(new_entry));
+    ++used_;
+  }
+
+  const T& top() const {
+    if (used_ < 1) {
+      throw std::out_of_range("VectorBuf::top(): empty buffer"); 
+    }
+    return data_[used_ - 1];
+  }
+
+  T& top() { return const_cast<T&>(static_cast<const Vector&>(*this).top()); }
+
+  void pop() {
+    if (used_ < 1) {
+      throw std::out_of_range("VectorBuf::pop(): empty buffer"); 
+    }
+    --used_;
+    mydestroy(data_ + used_);
+  }
+
+  void reserve(size_t new_size) {
+    if (new_size > size_) { grow(new_size); }
+  }
+
+  void resize(size_t new_used, const T& new_entry) {
+    if (new_used < used_) {
+      for (; used_ > new_used; --used_) {
+        mydestroy(data_ + used_ - 1);
+      }
+    } else {
+      reserve(new_used);
+      for (; used_ < new_used; ++used_) { myconstruct(data_ + used_, new_entry); }
+    }
+  }
+
+  void resize(size_t new_used) { resize(new_used, T{}); }
+  
+  [[nodiscard]] size_t size() const noexcept { return used_; }
+
+  [[nodiscard]] bool empty() const noexcept { return size() == 0; }
+
+  [[nodiscard]] size_t capacity() const noexcept { return size_; }
+
+private:
+  void grow(size_t new_size) {
+    assert(new_size > size_);
+    Vector tmp{new_size};
+    for (; tmp.used_ < used_; ++tmp.used_) {
+      if constexpr (std::is_nothrow_move_constructible_v<T>) {
+        myconstruct(tmp.data_ + tmp.used_, std::move(data_[tmp.used_]));
+      } else {
+        myconstruct(tmp.data_ + tmp.used_, data_[tmp.used_]);
+      }
+    }
+
+    std::swap(*this, tmp);
+  }
+
+  void grow() { grow((size_ * 2) + 1); }
+};
+
+} // namespace linal
