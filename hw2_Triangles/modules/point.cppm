@@ -8,26 +8,30 @@ import isshlyapin.config;
 
 namespace geometry {
 
-export struct Point2 {
-    Point2(double x = 0, double y = 0) : x(x), y(y) {}
+export
+template<std::floating_point T>
+struct Point2 {
+    Point2(T x = T{}, T y = T{}) : x(x), y(y) {}
 
-    double x, y;
+    T x, y;
 };
 
-export struct Point3 {
-    Point3(double x = 0, double y = 0, double z = 0) : x(x), y(y), z(z) {}
+export 
+template<std::floating_point T>
+struct Point3 {
+    Point3(T x = T{}, T y = T{}, T z = T{}) : x(x), y(y), z(z) {}
 
     bool operator== (const Point3& other) const {
-        double dist = std::sqrt(
+        T dist = std::sqrt(
             (x - other.x) * (x - other.x) +
             (y - other.y) * (y - other.y) +
             (z - other.z) * (z - other.z)
         );
 
-        return dist < EPS;
+        return dist < EPS<T>;
     }
 
-    double x, y, z;
+    T x, y, z;
 };
 
 } // namespace geometry

@@ -8,12 +8,14 @@ import isshlyapin.point;
 
 namespace geometry {
 
-export struct Vector2 {
-    Vector2(double x = 0, double y = 0) : x(x), y(y) {}
+export 
+template<std::floating_point T>
+struct Vector2 {
+    Vector2(T x = T{}, T y = T{}) : x(x), y(y) {}
     
-    Vector2(const Point2& p1, const Point2& p2) : Vector2(p2.x - p1.x, p2.y - p1.y) {}
+    Vector2(const Point2<T>& p1, const Point2<T>& p2) : Vector2(p2.x - p1.x, p2.y - p1.y) {}
     
-    Vector2(const Point2& p) : Vector2(p.x, p.y) {}
+    Vector2(const Point2<T>& p) : Vector2(p.x, p.y) {}
 
     double dot(const Vector2& other_v) const {
         return (x * other_v.x) + (y * other_v.y);
@@ -31,15 +33,17 @@ export struct Vector2 {
         return (x * x) + (y * y);
     }
 
-    double x, y;
+    T x, y;
 };
 
-export struct Vector3 {
-    Vector3(double x = 0, double y = 0, double z = 0) : x(x), y(y), z(z) {}
+export 
+template<std::floating_point T>
+struct Vector3 {
+    Vector3(T x = T{}, T y = T{}, T z = T{}) : x(x), y(y), z(z) {}
 
-    Vector3(const Point3& p) : Vector3(p.x, p.y, p.z) {}
+    Vector3(const Point3<T>& p) : Vector3(p.x, p.y, p.z) {}
 
-    Vector3(const Point3& p1, const Point3& p2) 
+    Vector3(const Point3<T>& p1, const Point3<T>& p2) 
       : Vector3(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z) {}
         
     Vector3 cross(const Vector3& other_v) const {
@@ -94,7 +98,7 @@ export struct Vector3 {
         return *this;
     }
     
-    double x, y, z;
+    T x, y, z;
 };
 
 } // namespace geometry

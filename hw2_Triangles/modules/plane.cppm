@@ -10,9 +10,11 @@ import isshlyapin.config;
 
 namespace geometry {
 
-export class Plane3 {
+export
+template<std::floating_point T>
+class Plane3 {
 public:
-    Plane3(Point3 p1, Point3 p2, Point3 p3) {
+    Plane3(Point3<T> p1, Point3<T> p2, Point3<T> p3) {
         Vector3 vec1{p1, p2};
         Vector3 vec2{p1, p3};
 
@@ -22,25 +24,25 @@ public:
         // if (!is_valid()) { throw std::invalid_argument("Uncorrect points"); }
     }
 
-    Plane3(const Vector3& v, double d = 0) : normal{v}, d{d} {
+    Plane3(const Vector3<T>& v, double d = 0) : normal{v}, d{d} {
         // if (!is_valid()) { throw std::invalid_argument("Uncorrect points"); }
     }
 
     bool is_valid() const {
-        return normal.length() > EPS;
+        return normal.length() > EPS<T>;
     }
 
-    double distance_to_point(const Point3& p) const {
+    double distance_to_point(const Point3<T>& p) const {
         return normal.dot(p) + d;
     }
 
-    const Vector3& get_normal() const {
+    const Vector3<T>& get_normal() const {
         return normal;
     }
 
 private:
     double d;
-    Vector3 normal;
+    Vector3<T> normal;
 };
 
 } // namespace geometry

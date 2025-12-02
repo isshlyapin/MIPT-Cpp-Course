@@ -6,7 +6,9 @@ import isshlyapin.point;
 import isshlyapin.line_segment;
 
 using Catch::Approx;
-using namespace geometry;
+
+using Point2 = geometry::Point2<double>;
+using LineSegment2 = geometry::LineSegment2<double>;
 
 TEST_CASE("Basic functionality LineSegment2", "[LineSegment2]") {
     const Point2 p1{0.0, 0.0};
@@ -29,47 +31,77 @@ TEST_CASE("Basic functionality LineSegment2", "[LineSegment2]") {
 }
 
 TEST_CASE("Normal LineSegment2 intersection", "[LineSegment2]") {
-    const LineSegment2 ls1{Point2{0, 0}, Point2{1, 1}};
+    const LineSegment2 ls1{Point2{0.0, 0.0}, Point2{1.0, 1.0}};
     REQUIRE(ls1.intersects(ls1));
 
-    const LineSegment2 ls2{Point2{1, 0}, Point2{1, -1}};
+    const LineSegment2 ls2{Point2{1.0, 0.0}, Point2{1.0, -1.0}};
     REQUIRE_FALSE(ls1.intersects(ls2));
     REQUIRE_FALSE(ls2.intersects(ls1));
 
-    const LineSegment2 ls3{Point2{1, 0}, Point2{0, 1}};
+    const LineSegment2 ls3{Point2{1.0, 0.0}, Point2{0.0, 1.0}};
     REQUIRE(ls1.intersects(ls3));
     REQUIRE(ls3.intersects(ls1));
 
-    const LineSegment2 ls4{Point2{0, 0}, Point2{-1, -1}};
+    const LineSegment2 ls4{Point2{0.0, 0.0}, Point2{-1.0, -1.0}};
     REQUIRE(ls1.intersects(ls4));
     REQUIRE(ls4.intersects(ls1));
 
-    const LineSegment2 ls5{Point2{0.5, 0.5}, Point2{1, 0}};
+    const LineSegment2 ls5{Point2{0.5, 0.5}, Point2{1.0, 0.0}};
     REQUIRE(ls1.intersects(ls5));
     REQUIRE(ls5.intersects(ls1));
     
-    const LineSegment2 ls6{Point2{0, 0}, Point2{2, 2}};
+    const LineSegment2 ls6{Point2{0.0, 0.0}, Point2{2.0, 2.0}};
     REQUIRE(ls1.intersects(ls6));
     REQUIRE(ls5.intersects(ls6));
 }
 
 TEST_CASE("Degenerate LineSegment2 intersection", "[LineSegment2]") {
-    const LineSegment2 ls1{Point2{0, 0}, Point2{0, 0}};
+    const LineSegment2 ls1{Point2{0.0, 0.0}, Point2{0.0, 0.0}};
     REQUIRE(ls1.intersects(ls1));
 
-    const LineSegment2 ls2{Point2{1, 0}, Point2{0, 1}};
+    const LineSegment2 ls2{Point2{1.0, 0.0}, Point2{0.0, 1.0}};
     REQUIRE_FALSE(ls1.intersects(ls2));
     REQUIRE_FALSE(ls2.intersects(ls1));
 
-    const LineSegment2 ls3{Point2{0, 0}, Point2{1, 1}};
+    const LineSegment2 ls3{Point2{0.0, 0.0}, Point2{1.0, 1.0}};
     REQUIRE(ls1.intersects(ls3));
     REQUIRE(ls3.intersects(ls1));
 
-    const LineSegment2 ls4{Point2{-1, -1}, Point2{1, 1}};
+    const LineSegment2 ls4{Point2{-1.0, -1.0}, Point2{1.0, 1.0}};
     REQUIRE(ls1.intersects(ls4));
     REQUIRE(ls4.intersects(ls1));
 
-    const LineSegment2 ls5{Point2{1, 1}, Point2{1, 1}};
+    const LineSegment2 ls5{Point2{1.0, 1.0}, Point2{1.0, 1.0}};
     REQUIRE_FALSE(ls1.intersects(ls5));
     REQUIRE_FALSE(ls5.intersects(ls1));
+}
+
+// ============== FLOAT TYPE TESTS ==============
+
+using Point2f = geometry::Point2<float>;
+using LineSegment2f = geometry::LineSegment2<float>;
+
+TEST_CASE("Basic functionality LineSegment2 (float)", "[LineSegment2][float]") {
+    const Point2f p1{0.0f, 0.0f};
+    const Point2f p2{1.0f, 1.0f};
+
+    const LineSegment2f ls1{p1, p2};
+    REQUIRE_FALSE(ls1.is_degenerate());
+    REQUIRE(ls1.get_type() == LineSegment2f::Type::LineSegment);
+    
+    const Point2f tp1 = ls1.get_point(0);
+    const Point2f tp2 = ls1.get_point(1);
+    REQUIRE(tp1.x == Approx(0.0f));
+    REQUIRE(tp2.x == Approx(1.0f));
+}
+
+TEST_CASE("LineSegment2 intersection (float)", "[LineSegment2][float]") {
+    const LineSegment2f ls1{Point2f{0.0f, 0.0f}, Point2f{1.0f, 1.0f}};
+    const LineSegment2f ls2{Point2f{1.0f, 0.0f}, Point2f{0.0f, 1.0f}};
+    
+    REQUIRE(ls1.intersects(ls1));
+    REQUIRE(ls1.intersects(ls2));
+    
+    const LineSegment2f ls3{Point2f{2.0f, 2.0f}, Point2f{3.0f, 3.0f}};
+    REQUIRE_FALSE(ls1.intersects(ls3));
 }

@@ -12,29 +12,32 @@ import isshlyapin.config;
 
 namespace geometry {
 
-double scalar_triple_product(const Vector3& v1, const Vector3& v2, const Vector3& v3) {
+template<std::floating_point T>
+double scalar_triple_product(const Vector3<T>& v1, const Vector3<T>& v2, const Vector3<T>& v3) {
     return (v1.x * (v2.y * v3.z - v2.z * v3.y)) -
            (v1.y * (v2.x * v3.z - v2.z * v3.x)) +
            (v1.z * (v2.x * v3.y - v2.y * v3.x));
 }
 
-export class Line3 {
+export
+template<std::floating_point T>
+class Line3 {
 public:
-    Line3(const Vector3& v, const Point3& p) : d_(p), dir_(v) {
-        if (v.length() < EPS) {
+    Line3(const Vector3<T>& v, const Point3<T>& p) : d_(p), dir_(v) {
+        if (v.length() < EPS<T>) {
             throw std::invalid_argument("Uncorrect direction");
         }
     }
 
-    std::optional<Point3> intersects(const Line3& other_l) const {
+    std::optional<Point3<T>> intersects(const Line3& other_l) const {
         const Vector3 d1d2{d_, other_l.get_point()};
 
-        if (std::fabs(scalar_triple_product(dir_, other_l.get_dir(), d1d2)) > EPS) {
+        if (std::fabs(scalar_triple_product(dir_, other_l.get_dir(), d1d2)) > EPS<T>) {
             return std::nullopt;
         }
 
-        if (dir_.cross(other_l.get_dir()).length() < EPS) {
-            if (dir_.cross(d1d2).length() > EPS) {
+        if (dir_.cross(other_l.get_dir()).length() < EPS<T>) {
+            if (dir_.cross(d1d2).length() > EPS<T>) {
                 return std::nullopt;
             }
             return d_;
@@ -55,17 +58,17 @@ public:
         return Point3{res.x, res.y, res.z};
     }
 
-    const Point3& get_point() const {
+    const Point3<T>& get_point() const {
         return d_;
     }
 
-    const Vector3& get_dir() const {
+    const Vector3<T>& get_dir() const {
         return dir_;
     }
 
 private:
-    Point3 d_;
-    Vector3 dir_;
+    Point3<T> d_;
+    Vector3<T> dir_;
 };
 
 } //namespace geometry

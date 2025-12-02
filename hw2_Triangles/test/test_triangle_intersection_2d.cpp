@@ -5,7 +5,9 @@ import isshlyapin.triangle;
 import isshlyapin.point;
 
 using Catch::Approx;
-using namespace geometry;
+
+using Point2 = geometry::Point2<double>;
+using Triangle2 = geometry::Triangle2<double>;
 
 TEST_CASE("Basic functionality Triangle2", "[Triangle2]") {
     const Point2 p1{0.0, 0.0};
@@ -22,47 +24,47 @@ TEST_CASE("Basic functionality Triangle2", "[Triangle2]") {
 }
 
 TEST_CASE("Degenerate Triangle2 types", "[Triangle2]") {
-    const Triangle2 t_point{Point2{0, 0}, Point2{0, 0}, Point2{0, 0}};
+    const Triangle2 t_point{Point2{0.0, 0.0}, Point2{0.0, 0.0}, Point2{0.0, 0.0}};
     REQUIRE(t_point.is_degenerate());
     REQUIRE(t_point.get_type() == Triangle2::Type::Point);
 
-    const Triangle2 t_segment{Point2{0, 0}, Point2{1, 1}, Point2{2, 2}};
+    const Triangle2 t_segment{Point2{0.0, 0.0}, Point2{1.0, 1.0}, Point2{2.0, 2.0}};
     REQUIRE(t_segment.is_degenerate());
     REQUIRE(t_segment.get_type() == Triangle2::Type::LineSegment);
 }
 
 TEST_CASE("Triangle2 contains_point", "[Triangle2]") {
-    const Triangle2 t{Point2{0, 0}, Point2{2, 0}, Point2{0, 2}};
+    const Triangle2 t{Point2{0.0, 0.0}, Point2{2.0, 0.0}, Point2{0.0, 2.0}};
 
     SECTION("Inside") {
         REQUIRE(t.contains_point(Point2{0.5, 0.5}));
     }
 
     SECTION("On edge") {
-        REQUIRE(t.contains_point(Point2{1, 0}));
-        REQUIRE(t.contains_point(Point2{0, 1}));
-        REQUIRE(t.contains_point(Point2{1, 1}));
+        REQUIRE(t.contains_point(Point2{1.0, 0.0}));
+        REQUIRE(t.contains_point(Point2{0.0, 1.0}));
+        REQUIRE(t.contains_point(Point2{1.0, 1.0}));
     }
 
     SECTION("Outside") {
-        REQUIRE_FALSE(t.contains_point(Point2{2, 2}));
+        REQUIRE_FALSE(t.contains_point(Point2{2.0, 2.0}));
     }
 }
 
 TEST_CASE("Triangle2 contains_point degenerate", "[Triangle2]") {
-    const Triangle2 t_point{Point2{1, 1}, Point2{1, 1}, Point2{1, 1}};
-    REQUIRE(t_point.contains_point(Point2{1, 1}));
-    REQUIRE_FALSE(t_point.contains_point(Point2{2, 2}));
+    const Triangle2 t_point{Point2{1.0, 1.0}, Point2{1.0, 1.0}, Point2{1.0, 1.0}};
+    REQUIRE(t_point.contains_point(Point2{1.0, 1.0}));
+    REQUIRE_FALSE(t_point.contains_point(Point2{2.0, 2.0}));
 
-    const Triangle2 t_segment{Point2{0, 0}, Point2{1, 1}, Point2{2, 2}};
-    REQUIRE(t_segment.contains_point(Point2{1, 1}));
-    REQUIRE_FALSE(t_segment.contains_point(Point2{1, 2}));
+    const Triangle2 t_segment{Point2{0.0, 0.0}, Point2{1.0, 1.0}, Point2{2.0, 2.0}};
+    REQUIRE(t_segment.contains_point(Point2{1.0, 1.0}));
+    REQUIRE_FALSE(t_segment.contains_point(Point2{1.0, 2.0}));
 }
 
 TEST_CASE("Triangle2 intersection - regular cases", "[Triangle2]") {
-    const Triangle2 t1{Point2{0, 0}, Point2{2, 0}, Point2{0, 2}};
-    const Triangle2 t2{Point2{1, 1}, Point2{3, 1}, Point2{1, 3}};
-    const Triangle2 t3{Point2{3, 3}, Point2{4, 3}, Point2{3, 4}};
+    const Triangle2 t1{Point2{0.0, 0.0}, Point2{2.0, 0.0}, Point2{0.0, 2.0}};
+    const Triangle2 t2{Point2{1.0, 1.0}, Point2{3.0, 1.0}, Point2{1.0, 3.0}};
+    const Triangle2 t3{Point2{3.0, 3.0}, Point2{4.0, 3.0}, Point2{3.0, 4.0}};
 
     SECTION("Overlapping triangles") {
         REQUIRE(t1.intersects(t2));
@@ -82,10 +84,10 @@ TEST_CASE("Triangle2 intersection - regular cases", "[Triangle2]") {
 }
 
 TEST_CASE("Triangle2 intersection - degenerate cases", "[Triangle2]") {
-    const Triangle2 t{Point2{0, 0}, Point2{2, 0}, Point2{0, 2}};
-    const Triangle2 t_segment{Point2{0, 0}, Point2{1, 1}, Point2{2, 2}};
-    const Triangle2 t_point{Point2{1, 1}, Point2{1, 1}, Point2{1, 1}};
-    const Triangle2 t_outside{Point2{3, 3}, Point2{4, 3}, Point2{3, 4}};
+    const Triangle2 t{Point2{0.0, 0.0}, Point2{2.0, 0.0}, Point2{0.0, 2.0}};
+    const Triangle2 t_segment{Point2{0.0, 0.0}, Point2{1.0, 1.0}, Point2{2.0, 2.0}};
+    const Triangle2 t_point{Point2{1.0, 1.0}, Point2{1.0, 1.0}, Point2{1.0, 1.0}};
+    const Triangle2 t_outside{Point2{3.0, 3.0}, Point2{4.0, 3.0}, Point2{3.0, 4.0}};
 
     SECTION("Triangle intersects segment") {
         REQUIRE(t.intersects(t_segment));
@@ -101,4 +103,40 @@ TEST_CASE("Triangle2 intersection - degenerate cases", "[Triangle2]") {
         REQUIRE_FALSE(t_outside.intersects(t_point));
         REQUIRE_FALSE(t_point.intersects(t_outside));
     }
+}
+
+// ============== FLOAT TYPE TESTS ==============
+
+using Point2f = geometry::Point2<float>;
+using Triangle2f = geometry::Triangle2<float>;
+
+TEST_CASE("Basic functionality Triangle2 (float)", "[Triangle2][float]") {
+    const Point2f p1{0.0f, 0.0f};
+    const Point2f p2{1.0f, 0.0f};
+    const Point2f p3{0.0f, 1.0f};
+
+    const Triangle2f t1{p1, p2, p3};
+    REQUIRE_FALSE(t1.is_degenerate());
+    REQUIRE(t1.get_type() == Triangle2f::Type::Triangle);
+
+    REQUIRE(t1.get_point(0).x == Approx(0.0f));
+    REQUIRE(t1.get_point(1).x == Approx(1.0f));
+    REQUIRE(t1.get_point(2).y == Approx(1.0f));
+}
+
+TEST_CASE("Triangle2 contains_point (float)", "[Triangle2][float]") {
+    const Triangle2f t{Point2f{0.0f, 0.0f}, Point2f{2.0f, 0.0f}, Point2f{0.0f, 2.0f}};
+
+    REQUIRE(t.contains_point(Point2f{0.5f, 0.5f}));
+    REQUIRE(t.contains_point(Point2f{1.0f, 0.0f}));
+    REQUIRE_FALSE(t.contains_point(Point2f{2.0f, 2.0f}));
+}
+
+TEST_CASE("Triangle2 intersection (float)", "[Triangle2][float]") {
+    const Triangle2f t1{Point2f{0.0f, 0.0f}, Point2f{2.0f, 0.0f}, Point2f{0.0f, 2.0f}};
+    const Triangle2f t2{Point2f{1.0f, 0.0f}, Point2f{3.0f, 0.0f}, Point2f{1.0f, 2.0f}};
+    REQUIRE(t1.intersects(t2));
+
+    const Triangle2f t3{Point2f{3.0f, 3.0f}, Point2f{4.0f, 3.0f}, Point2f{3.0f, 4.0f}};
+    REQUIRE_FALSE(t1.intersects(t3));
 }

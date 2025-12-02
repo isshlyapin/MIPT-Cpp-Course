@@ -13,17 +13,17 @@ import isshlyapin.point;
 import isshlyapin.config;
 import isshlyapin.triangle;
 
-using Point3    = geometry::Point3;
-using Triangle3 = geometry::Triangle3;
+using Point3    = geometry::Point3<double>;
+using Triangle3 = geometry::Triangle3<double>;
 
 struct Box3 {
     Point3 min;
     Point3 max;
 
     bool intersects(const Box3& other) const {
-        return ((min.x - EPS) < other.max.x && (max.x + EPS) > other.min.x) &&
-               ((min.y - EPS) < other.max.y && (max.y + EPS) > other.min.y) &&
-               ((min.z - EPS) < other.max.z && (max.z + EPS) > other.min.z);
+        return ((min.x - EPS<double>) < other.max.x && (max.x + EPS<double>) > other.min.x) &&
+               ((min.y - EPS<double>) < other.max.y && (max.y + EPS<double>) > other.min.y) &&
+               ((min.z - EPS<double>) < other.max.z && (max.z + EPS<double>) > other.min.z);
     }
 
     void extend(const Box3& other) {
@@ -130,9 +130,9 @@ GridParams calculate_grid_params(const std::vector<Box3>& boxes, size_t tri_numb
     const double dz = std::max(base_cell_depth,  min_cell_depth);
     const double dy = std::max(base_cell_height, min_cell_height);
 
-    const size_t n_cells_x = (dx > EPS) ? static_cast<size_t>(std::ceil((boxes[0].max.x - boxes[0].min.x) / dx)) : 1;
-    const size_t n_cells_y = (dy > EPS) ? static_cast<size_t>(std::ceil((boxes[0].max.y - boxes[0].min.y) / dy)) : 1;
-    const size_t n_cells_z = (dz > EPS) ? static_cast<size_t>(std::ceil((boxes[0].max.z - boxes[0].min.z) / dz)) : 1;
+    const size_t n_cells_x = (dx > EPS<double>) ? static_cast<size_t>(std::ceil((boxes[0].max.x - boxes[0].min.x) / dx)) : 1;
+    const size_t n_cells_y = (dy > EPS<double>) ? static_cast<size_t>(std::ceil((boxes[0].max.y - boxes[0].min.y) / dy)) : 1;
+    const size_t n_cells_z = (dz > EPS<double>) ? static_cast<size_t>(std::ceil((boxes[0].max.z - boxes[0].min.z) / dz)) : 1;
 
     const size_t total_cells = n_cells_x * n_cells_y * n_cells_z;
 
@@ -145,13 +145,13 @@ std::vector<std::vector<size_t>> map_triangles_to_cells(const std::vector<Box3>&
     for (size_t i = 1, sz = boxes.size(); i < sz; ++i) {
         const auto& box = boxes[i];
 
-        size_t x_min_cell = (params.dx > EPS) ? static_cast<size_t>((box.min.x - boxes[0].min.x) / params.dx) : 0;
-        size_t y_min_cell = (params.dy > EPS) ? static_cast<size_t>((box.min.y - boxes[0].min.y) / params.dy) : 0;
-        size_t z_min_cell = (params.dz > EPS) ? static_cast<size_t>((box.min.z - boxes[0].min.z) / params.dz) : 0;
+        size_t x_min_cell = (params.dx > EPS<double>) ? static_cast<size_t>((box.min.x - boxes[0].min.x) / params.dx) : 0;
+        size_t y_min_cell = (params.dy > EPS<double>) ? static_cast<size_t>((box.min.y - boxes[0].min.y) / params.dy) : 0;
+        size_t z_min_cell = (params.dz > EPS<double>) ? static_cast<size_t>((box.min.z - boxes[0].min.z) / params.dz) : 0;
 
-        size_t x_max_cell = (params.dx > EPS) ? static_cast<size_t>((box.max.x - boxes[0].min.x) / params.dx) : 0;
-        size_t y_max_cell = (params.dy > EPS) ? static_cast<size_t>((box.max.y - boxes[0].min.y) / params.dy) : 0;
-        size_t z_max_cell = (params.dz > EPS) ? static_cast<size_t>((box.max.z - boxes[0].min.z) / params.dz) : 0;
+        size_t x_max_cell = (params.dx > EPS<double>) ? static_cast<size_t>((box.max.x - boxes[0].min.x) / params.dx) : 0;
+        size_t y_max_cell = (params.dy > EPS<double>) ? static_cast<size_t>((box.max.y - boxes[0].min.y) / params.dy) : 0;
+        size_t z_max_cell = (params.dz > EPS<double>) ? static_cast<size_t>((box.max.z - boxes[0].min.z) / params.dz) : 0;
 
         x_min_cell = std::min(x_min_cell, params.n_cells_x - 1);
         y_min_cell = std::min(y_min_cell, params.n_cells_y - 1);

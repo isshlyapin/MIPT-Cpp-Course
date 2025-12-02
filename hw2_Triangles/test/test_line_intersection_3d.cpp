@@ -7,21 +7,24 @@ import isshlyapin.vector;
 import isshlyapin.line;
 
 using Catch::Approx;
-using namespace geometry;
+
+using Point3 = geometry::Point3<double>;
+using Vector3 = geometry::Vector3<double>;
+using Line3 = geometry::Line3<double>;
 
 TEST_CASE("Basic functionality Line", "[Line]") {
-    REQUIRE_THROWS(Line3{Vector3{0, 0, 0}, Point3{1, 1, 1}});
+    REQUIRE_THROWS(Line3{Vector3{0.0, 0.0, 0.0}, Point3{1.0, 1.0, 1.0}});
 
-    const Line3 l1{Vector3{1, 0, 0}, Point3{0, 0, 1}};
-    const Line3 l2{Vector3{0, 1, 0}, Point3{0, 0, -1}};
+    const Line3 l1{Vector3{1.0, 0.0, 0.0}, Point3{0.0, 0.0, 1.0}};
+    const Line3 l2{Vector3{0.0, 1.0, 0.0}, Point3{0.0, 0.0, -1.0}};
     REQUIRE_FALSE(l1.intersects(l2));
     REQUIRE_FALSE(l2.intersects(l1));
 
-    const Line3 l3{Vector3{1, 0, 0}, Point3{0, 1, 1}};
+    const Line3 l3{Vector3{1.0, 0.0, 0.0}, Point3{0.0, 1.0, 1.0}};
     REQUIRE_FALSE(l1.intersects(l3));
     REQUIRE_FALSE(l3.intersects(l1));
 
-    const Line3 l4{Vector3{1, 0, 0}, Point3{0, 0, 1}};
+    const Line3 l4{Vector3{1.0, 0.0, 0.0}, Point3{0.0, 0.0, 1.0}};
     REQUIRE(l1.intersects(l4));
     REQUIRE(l4.intersects(l4));
     
@@ -30,8 +33,8 @@ TEST_CASE("Basic functionality Line", "[Line]") {
     REQUIRE(res.value().y == Approx(0));
     REQUIRE(res.value().z == Approx(1));
 
-    const Line3 l5{Vector3{1, 1, 1}, Point3{1, 1, 1}};
-    const Line3 l6{Vector3{-1, -1, 2}, Point3{-1, -1, 2}};
+    const Line3 l5{Vector3{1.0, 1.0, 1.0}, Point3{1.0, 1.0, 1.0}};
+    const Line3 l6{Vector3{-1.0, -1.0, 2.0}, Point3{-1.0, -1.0, 2.0}};
     REQUIRE(l5.intersects(l6));
     REQUIRE(l6.intersects(l5));
 
