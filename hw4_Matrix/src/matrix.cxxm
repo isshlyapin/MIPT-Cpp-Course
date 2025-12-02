@@ -6,6 +6,7 @@ export module linal:matrix;
 
 import std;
 import :vector;
+import :config;
 
 namespace linal {
 
@@ -45,60 +46,110 @@ public:
     return const_cast<Vector<T>&>(static_cast<const Matrix&>(*this)[idx]);
   }
 
-  [[nodiscard]] double determinant() const {
-    // Матрица должна быть квадратной
-    size_t n = data_.size();
-    if (n == 0) { return 1.0; } // det(0×0) = 1
+  [[nodiscard]] 
+  size_t nrows() const {
+    return data_.size();
+  }
 
-    // Предполагаем, что ВСЕ строки имеют одинаковый размер
-    // (иначе это не матрица)
-    if (data_[0].size() != n) {
-        throw std::logic_error("Matrix must be square for determinant()");
+  [[nodiscard]] 
+  size_t ncols() const {
+    if (data_.empty()) { return 0; }
+    return data_[0].size();
+  }
+
+  [[nodiscard]] 
+  bool is_square() const {
+    if (data_.empty()) { return true; }
+    return nrows() == ncols();
+  }
+
+  [[nodiscard]]
+  double determinant() const requires std::floating_point<T> {
+    size_t n = nrows();
+    if (n == 0) { 
+      throw std::logic_error("The matrix should not be empty for determinant()");
     }
-    
-    // Копируем матрицу, т.к. будем её модифицировать
+    if (!is_square()) {
+      throw std::logic_error("Matrix must be square for determinant()");
+    }
+
     Matrix<T> tmp(*this);
-    double det = 1.0;
-    int sign = 1;
+    double det{1.0};
+    int sign{1};
 
     for (size_t i = 0; i < n; ++i) {
-      // --- Выбор главного элемента (partial pivoting) ---
       size_t pivot = i;
-      T max_val = std::abs(tmp[pivot][i]);
-
-      for (size_t r = i + 1; r < n; ++r) {
-        T v = std::abs(tmp[r][i]);
+      double max_val = std::abs(tmp[pivot][i]);
+      for (size_t j = i + 1; j < n; ++j) {
+        double v = std::abs(tmp[j][i]);
         if (v > max_val) {
           max_val = v;
-          pivot = r;
+          pivot = j;
         }
       }
 
-      // Если главный элемент ~0 → детерминант = 0
-      if (max_val == T{}) { return 0.0; }
+      if (max_val < EPS) { return 0.0; }
 
-      // --- Если pivot не на месте — меняем строки ---
-      std::swap(tmp[i], tmp[pivot]);
-      sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
-
-      // --- Прямой ход Гаусса ---
-      const T& diag = tmp[i][i];
-      for (size_t r = i + 1; r < n; ++r) {
-          const T& factor = tmp[r][i] / diag;
-          tmp[r][i] = T{}; // элемент под диагональю станет 0
-
-          for (size_t c = i + 1; c < n; ++c) {
-              tmp[r][c] -= factor * tmp[i][c];
-          }
+      if (pivot != i) {
+        std::swap(tmp[i], tmp[pivot]);
+        sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
       }
 
-      // Диагональные элементы перемножаются
-      det *= static_cast<double>(diag);
-    }
+      const double diag = tmp[i][i];
+      for (size_t j = i + 1; j < n; ++j) {
+        const double factor = tmp[j][i] / diag;
+        tmp[j][i] = 0.0;
 
+        for (size_t c = i + 1; c < n; ++c) {
+          tmp[j][c] -= factor * tmp[i][c];
+        }
+      }
+      det *= diag;
+    }
     return det * sign;
   }
 
+  [[nodiscard]]
+  int determinant() const requires std::integral<T> {
+    size_t n = nrows();
+    if (n == 0) {
+      throw std::logic_error("The matrix should not be empty for determinant()");
+    }
+    if (!is_square()) {
+      throw std::logic_error("Matrix must be square for determinant()");
+    }
+
+    Matrix tmp(*this);
+
+    int sign{1};
+    int prev_diag = 1;
+    for (size_t i = 0; i < n - 1; ++i) {
+      size_t pivot = i;
+      int max_val = std::abs(tmp[pivot][i]);
+      for (size_t j = i + 1; j < n; ++j) {
+          int v = std::abs(tmp[j][i]);
+          if (v > max_val) {
+              max_val = v;
+              pivot = j;
+          }
+      }
+      if (max_val == 0) { return 0; }
+
+      if (pivot != i) {
+        std::swap(tmp[i], tmp[pivot]);
+        sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
+      }
+
+      const int diag = tmp[i][i];
+      for (size_t j = i + 1; j < n; ++j) {
+        for (size_t k = i + 1; k < n; ++k) {
+          tmp[j][k] = (tmp[j][k] * diag - tmp[j][i] * tmp[i][k]) / prev_diag;
+        }
+      }
+      prev_diag = diag;
+    }
+    return tmp[n - 1][n - 1] * sign;
+  }
 
 private:
   Vector<Vector<T>> data_;

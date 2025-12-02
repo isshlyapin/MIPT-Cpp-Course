@@ -1,4 +1,4 @@
-# Пример программы C++ с использование C++20 модулей
+# Matrix
 
 ## Сборка
 ```bash
@@ -14,10 +14,17 @@ cd workspace
 ```
 
 ```bash
+# для сборки тестов добавить опцию "-o btest=True"
 conan build . --build=missing -s build_type=Release -pr:a clang21
 ```
 
 ## Запуск
 ```bash
-./build/Release/main
+# основная программа расчета детерминанта
+./build/Release/det
+```
+
+```bash
+# тесты
+ctest --test-dir build/Release/test --timeout 3
 ```

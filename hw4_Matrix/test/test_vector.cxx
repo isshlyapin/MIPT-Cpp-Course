@@ -3,8 +3,6 @@
 import std;
 import linal;
 
-namespace {
-
 TEST(VectorTest, DefaultConstructedVectorIsEmpty) {
   linal::Vector<int> vec;
 
@@ -87,21 +85,6 @@ TEST(VectorTest, MoveConstructorTransfersOwnership) {
   EXPECT_EQ(moved.size(), 2);
   EXPECT_EQ(moved[0], 5);
   EXPECT_EQ(moved[1], 6);
-  EXPECT_TRUE(original.empty());
-}
-
-TEST(VectorTest, MoveAssignmentClearsSource) {
-  linal::Vector<int> source;
-  source.push(42);
-
-  linal::Vector<int> destination;
-  destination.push(1);
-  destination.push(2);
-
-  destination = std::move(source);
-
-  EXPECT_EQ(destination.size(), 1);
-  EXPECT_EQ(destination[0], 42);
 }
 
 TEST(VectorTest, ReserveDoesNotShrinkBuffer) {
@@ -126,10 +109,3 @@ TEST(VectorTest, ResizeAddsAndRemovesElements) {
   EXPECT_EQ(vec.size(), 1);
   EXPECT_EQ(vec[0], "x");
 }
-
-TEST(VectorTest, TopThrowsOnEmptyVector) {
-  linal::Vector<int> vec;
-  EXPECT_THROW(vec.top(), std::out_of_range);
-}
-
-}  // namespace

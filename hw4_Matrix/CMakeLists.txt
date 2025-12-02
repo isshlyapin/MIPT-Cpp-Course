@@ -12,6 +12,7 @@ target_sources(linal
   PUBLIC
     FILE_SET cxx_modules TYPE CXX_MODULES
     FILES 
+      src/config.cxxm
       src/vector.cxxm
       src/matrix.cxxm
       src/linal.cxxm
