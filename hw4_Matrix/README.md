@@ -14,7 +14,8 @@ cd workspace
 ```
 
 ```bash
-# для сборки тестов добавить опцию "-o btest=True"
+# для сборки тестов добавить опцию "-o btest_opt=True"
+# для отключения import std добавить опцию "-o importstd_opt=False"
 conan build . --build=missing -s build_type=Release -pr:a clang21
 ```
 

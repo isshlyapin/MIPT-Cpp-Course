@@ -3,9 +3,19 @@ module;
 #include <cstddef>
 #include <cassert>
 
+#ifndef USE_IMPORT_STD
+#include <new>
+#include <utility>
+#include <algorithm>
+#include <stdexcept>
+#include <type_traits>
+#endif
+
 export module linal:vector;
 
+#ifdef USE_IMPORT_STD
 import std;
+#endif
 
 namespace linal {
 

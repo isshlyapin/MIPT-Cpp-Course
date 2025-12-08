@@ -1,6 +1,12 @@
 #include <gtest/gtest.h>
 
+#ifdef USE_IMPORT_STD
 import std;
+#else
+#include <string>
+#include <stdexcept>
+#endif
+
 import linal;
 
 TEST(VectorTest, DefaultConstructedVectorIsEmpty) {

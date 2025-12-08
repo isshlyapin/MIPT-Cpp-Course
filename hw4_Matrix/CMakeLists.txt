@@ -1,10 +1,16 @@
 cmake_minimum_required(VERSION 3.30)
 
-set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+option(USE_IMPORT_STD "Use import std (C++23 experimental feature)" OFF)
+
+if(USE_IMPORT_STD)
+    set(CMAKE_EXPERIMENTAL_CXX_IMPORT_STD "d0edc3af-4c50-42ea-a356-e2862fe7a444")
+endif()
 
 project(Matrix LANGUAGES CXX)
 
-set(CMAKE_CXX_MODULE_STD 1)
+if(USE_IMPORT_STD)
+    set(CMAKE_CXX_MODULE_STD 1)
+endif()
 
 add_library(linal STATIC)
 

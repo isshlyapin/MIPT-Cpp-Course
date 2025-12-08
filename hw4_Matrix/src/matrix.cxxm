@@ -2,9 +2,19 @@ module;
 
 #include <cstddef>
 
+#ifndef USE_IMPORT_STD
+#include <cmath>
+#include <utility>
+#include <concepts>
+#include <stdexcept>
+#endif
+
 export module linal:matrix;
 
+#ifdef USE_IMPORT_STD
 import std;
+#endif
+
 import :vector;
 import :config;
 
@@ -92,7 +102,8 @@ public:
 
       if (pivot != i) {
         std::swap(tmp[i], tmp[pivot]);
-        sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
+        // sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
+        sign *= -1;
       }
 
       const double diag = tmp[i][i];
@@ -104,8 +115,13 @@ public:
           tmp[j][c] -= factor * tmp[i][c];
         }
       }
-      det *= diag;
+      // det *= diag;
     }
+
+    for (size_t i = 0; i < n; ++i) {
+      det *= tmp[i][i];
+    }
+
     return det * sign;
   }
 
@@ -137,7 +153,8 @@ public:
 
       if (pivot != i) {
         std::swap(tmp[i], tmp[pivot]);
-        sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
+        // sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
+        sign *= -1;
       }
 
       const int diag = tmp[i][i];

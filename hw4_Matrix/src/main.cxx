@@ -1,6 +1,14 @@
 #include <cstddef>
 
+#ifdef USE_IMPORT_STD
 import std;
+#else
+#include <print>
+#include <vector>
+#include <iostream>
+#include <stdexcept>
+#endif
+
 import linal;
 
 int main() {
