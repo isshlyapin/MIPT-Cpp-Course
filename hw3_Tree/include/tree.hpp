@@ -421,12 +421,13 @@ private:
   void inorder(F visit) {
     Node* node = left_most(root_);
     while (node != nullptr) {
-      visit(node);
+      Node* vnode = node;
       if (node->right_th) { 
         node = node->right; 
       } else {
         node = left_most(node->right);
       }
+      visit(vnode);
     }
   }
 
@@ -664,18 +665,13 @@ private:
   }
 
   void clear() {
-    std::vector<Node*> nodes;
-    auto visit = [&nodes](Node* node) {
-      nodes.push_back(node);
+    auto visit = [](Node* node) {
+      delete node;
     };
 
     inorder(visit);
-
-    for (auto ptr : nodes) {
-      delete ptr;
-    }
   }
-
+ 
   Node* root_;
   CompT comp_;
   size_t size_;
