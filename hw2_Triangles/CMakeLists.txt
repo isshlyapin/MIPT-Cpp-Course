@@ -44,4 +44,7 @@ target_link_libraries(triangle_intersection
     PUBLIC geometry intersection
 )
 
-add_subdirectory(test)
+option(BUILD_TEST "Build tests" OFF)
+if (BUILD_TEST)
+    add_subdirectory(test)
+endif()

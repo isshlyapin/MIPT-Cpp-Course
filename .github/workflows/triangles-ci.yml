@@ -1,14 +1,14 @@
-name: Tree CI
+name: Triangles CI
 
 on:
   push:
     paths:
-      - 'hw3_Tree/**'
-      - '.github/workflows/tree-ci.yml'
+      - 'hw2_Triangles/**'
+      - '.github/workflows/triangles-ci.yml'
   pull_request:
     paths:
-      - 'hw3_Tree/**'
-      - '.github/workflows/tree-ci.yml'
+      - 'hw2_Triangles/**'
+      - '.github/workflows/triangles-ci.yml'
 
 jobs:
   build-and-test:
@@ -19,7 +19,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: hw3_Tree
+        working-directory: hw2_Triangles
 
     steps:
       - name: Checkout
