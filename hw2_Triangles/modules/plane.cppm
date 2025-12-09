@@ -1,5 +1,6 @@
 module;
 
+#include <concepts>
 #include <stdexcept>
 
 export module isshlyapin.plane;

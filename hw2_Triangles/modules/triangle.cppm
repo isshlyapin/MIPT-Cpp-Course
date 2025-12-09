@@ -7,6 +7,7 @@ module;
 #include <utility>
 #include <cassert>
 #include <cstdint>
+#include <concepts>
 #include <algorithm>
 #include <stdexcept>
 

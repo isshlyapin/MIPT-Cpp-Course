@@ -1,6 +1,7 @@
 module;
 
 #include <cmath>
+#include <concepts>
 
 export module isshlyapin.vector;
 

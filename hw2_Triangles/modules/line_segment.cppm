@@ -3,6 +3,8 @@ module;
 #include <cmath>
 #include <array>
 #include <cstdint>
+#include <concepts>
+#include <optional>
 #include <algorithm>
 
 export module isshlyapin.line_segment;

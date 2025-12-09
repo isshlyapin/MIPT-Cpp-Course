@@ -2,6 +2,7 @@ module;
 
 #include <cmath>
 #include <optional>
+#include <concepts>
 #include <stdexcept>
 
 export module isshlyapin.line;
