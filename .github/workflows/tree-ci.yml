@@ -1,0 +1,37 @@
+name: Tree CI
+
+on:
+  push:
+    paths:
+      - 'hw3_Tree/**'
+      - '.github/workflows/tree-ci.yml'
+  pull_request:
+    paths:
+      - 'hw3_Tree/**'
+      - '.github/workflows/tree-ci.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # Запускаем все внутри кастомного Docker-образа с Docker Hub
+    container:
+      image: isshlyapin/ubuntu_cpp:cxx23
+      # options: --ipc=host  # Если нужны shared memory, например для gtest
+
+    defaults:
+      run:
+        working-directory: hw3_Tree   # ← ВАЖНО
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build with Conan
+        run: |
+          conan config install https://github.com/isshlyapin/conan_config.git
+          conan build . --build=missing -s build_type=Release -pr:a clang21 -o btest=True
+
+      - name: Run tests
+        run: |
+          ctest --test-dir build/Release/test --output-on-failure --timeout 3

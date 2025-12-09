@@ -310,7 +310,6 @@ TEST(ThreadedBinaryTree, SizeAfterMultipleOperations) {
     
     // Удаляем оставшиеся
     for (int i = 50; i < 100; ++i) {
-        tree.print();
         tree.remove(i);
     }
     EXPECT_EQ(tree.size(), 0);
