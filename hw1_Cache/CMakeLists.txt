@@ -23,4 +23,7 @@ target_link_libraries(cache
     CLI11::CLI11
 )
 
-add_subdirectory(tests)
+option(BUILD_TEST "Build tests" OFF)
+if (BUILD_TEST)
+    add_subdirectory(tests)
+endif()
