@@ -31,6 +31,22 @@ target_compile_features(linal
 
 add_executable(det)
 
+# target_compile_options(det PRIVATE 
+#     $<$<CONFIG:Debug>:
+#       -fsanitize=undefined
+#       -fsanitize=signed-integer-overflow
+#       -fno-omit-frame-pointer
+#       -g
+#     >
+# )
+
+# target_link_options(det PRIVATE 
+#     $<$<CONFIG:Debug>:
+#       -fsanitize=undefined
+#       -fsanitize=signed-integer-overflow
+#     >
+# )
+
 target_compile_features(det PRIVATE cxx_std_23)
 
 target_sources(det

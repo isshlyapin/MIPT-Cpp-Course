@@ -19,10 +19,10 @@ int main() {
       return 1;
     }
 
-    std::vector<int> values;
+    std::vector<double> values;
     values.reserve(N * N);
     for (size_t i = 0; i < N * N; ++i) {
-      int v = 0;
+      double v = 0;
       if (!(std::cin >> v)) {
         std::println("Failed to read matrix value");
         return 1;
@@ -30,9 +30,9 @@ int main() {
       values.push_back(v);
     }
 
-    const linal::Matrix<int> mat1(N, N, values.begin(), values.end());
+    const linal::Matrix<double> mat1(N, N, values.begin(), values.end());
 
-    std::println("{}", mat1.determinant());
+    std::println("{:.2f}", mat1.determinant());
   } catch (const std::exception& ex) {
     std::print("Exception: {}\n", ex.what());
     return 1;

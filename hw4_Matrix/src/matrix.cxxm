@@ -102,24 +102,19 @@ public:
 
       if (pivot != i) {
         std::swap(tmp[i], tmp[pivot]);
-        // sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
         sign *= -1;
       }
 
-      const double diag = tmp[i][i];
+      const T diag = tmp[i][i];
       for (size_t j = i + 1; j < n; ++j) {
         const double factor = tmp[j][i] / diag;
         tmp[j][i] = 0.0;
 
-        for (size_t c = i + 1; c < n; ++c) {
-          tmp[j][c] -= factor * tmp[i][c];
+        for (size_t k = i + 1; k < n; ++k) {
+          tmp[j][k] -= factor * tmp[i][k];
         }
       }
-      // det *= diag;
-    }
-
-    for (size_t i = 0; i < n; ++i) {
-      det *= tmp[i][i];
+      det *= diag;
     }
 
     return det * sign;
@@ -153,7 +148,6 @@ public:
 
       if (pivot != i) {
         std::swap(tmp[i], tmp[pivot]);
-        // sign *= ((pivot - i) % 2) == 0 ? 1 : -1;
         sign *= -1;
       }
 
