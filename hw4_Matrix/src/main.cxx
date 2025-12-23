@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstddef>
 
 #ifdef USE_IMPORT_STD
@@ -32,7 +33,7 @@ int main() {
 
     const linal::Matrix<double> mat1(N, N, values.begin(), values.end());
 
-    std::println("{:.2f}", mat1.determinant());
+    std::println("{}", static_cast<long long>(std::round(mat1.determinant())));
   } catch (const std::exception& ex) {
     std::print("Exception: {}\n", ex.what());
     return 1;
