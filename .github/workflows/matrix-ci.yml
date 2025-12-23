@@ -33,3 +33,7 @@ jobs:
       - name: Run tests
         run: |
           ctest --test-dir build/Release/test --output-on-failure --timeout 3
+
+      - name: Run E2E tests
+        run: |
+          uv run pytest script/test_det_e2e.py -v
