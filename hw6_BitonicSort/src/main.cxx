@@ -44,17 +44,17 @@ int main(int argc, char **argv) try {
 
   TimeFin = std::chrono::high_resolution_clock::now();
 
-  Dur = std::chrono::duration_cast<std::chrono::milliseconds>(
+  Dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
     TimeFin - TimeStart
   ).count();
 
-  std::cout << "GPU wall time measured: " << Dur << " ms" << std::endl;
+  std::cout << "GPU wall time measured: " << Dur << " ns" << std::endl;
 
   GPUTimeStart = prof.first_ev.getProfilingInfo<CL_PROFILING_COMMAND_START>();
   GPUTimeFin   = prof.last_ev.getProfilingInfo<CL_PROFILING_COMMAND_END>();
-  GDur = (GPUTimeFin - GPUTimeStart) / 1'000'000; // ns -> ms
+  GDur = (GPUTimeFin - GPUTimeStart); // ns
 
-  std::cout << "GPU pure time measured: " << GDur << " ms" << std::endl;
+  std::cout << "GPU pure time measured: " << GDur << " ns" << std::endl;
 
   if (!std::ranges::is_sorted(v)) {
     throw std::runtime_error("Sorting failed");
@@ -69,11 +69,11 @@ int main(int argc, char **argv) try {
  
   TimeFin = std::chrono::high_resolution_clock::now();
  
-  Dur = std::chrono::duration_cast<std::chrono::milliseconds>(
+  Dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
     TimeFin - TimeStart
   ).count();
 
-  std::cout << "CPU time measured: " << Dur << " ms" << std::endl;
+  std::cout << "CPU time measured: " << Dur << " ns" << std::endl;
 #endif
 } catch (const cl::BuildError &err) {
   std::cerr << "OCL BUILD ERROR: " << err.err() << ":" << err.what() << std::endl;

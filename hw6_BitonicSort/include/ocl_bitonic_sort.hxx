@@ -112,56 +112,37 @@ public:
     
     cl::Buffer buf(env_->get_context(), CL_MEM_READ_WRITE, bytes);
 
-    cl::Event transfer_first_event;
-    queue.enqueueWriteBuffer(buf, CL_FALSE, 0, bytes, std::to_address(start), nullptr, &transfer_first_event);
-
-    cl::Event first_exec_event;
-    bool first_exec = true;
-    cl::Event last_exec_event;
+    cl::Event first_event;
+    queue.enqueueWriteBuffer(buf, CL_FALSE, 0, bytes, std::to_address(start), nullptr, &first_event);
 
     size_t k   = 2;  
     size_t cnt = 2;
     for (; cnt <= sz && cnt <= right_lsz; cnt <<= 1, k <<= 1) {
-      cl::Event ev = lsort_kernel_(
+      lsort_kernel_(
         cl::EnqueueArgs(queue, cl::NDRange(sz), cl::NDRange(right_lsz)),
         buf, sz, cnt, k
       );
-      if (first_exec) {
-        first_exec_event = ev;
-        first_exec = false;
-      }
-      last_exec_event = ev;
     }
 
     for (; cnt <= sz; cnt <<= 1) {
       for (size_t j = cnt; j > right_lsz; j >>= 1) {
-        cl::Event ev = gsort_kernel_(
+        gsort_kernel_(
           cl::EnqueueArgs(queue, cl::NDRange(sz), cl::NDRange(right_lsz)),
           buf, sz, cnt, j
         );
-        if (first_exec) {
-          first_exec_event = ev;
-          first_exec = false;
-        }
-        last_exec_event = ev;
       }
-      cl::Event ev = lsort_kernel_(
+      lsort_kernel_(
         cl::EnqueueArgs(queue, cl::NDRange(sz), cl::NDRange(right_lsz)),
         buf, sz, cnt, right_lsz
       );
-      if (first_exec) {
-        first_exec_event = ev;
-        first_exec = false;
-      }
-      last_exec_event = ev;
     }
 
-    cl::Event transfer_last_event;
-    queue.enqueueReadBuffer(buf, CL_FALSE, 0, bytes, std::to_address(start), nullptr, &transfer_last_event);
+    cl::Event last_event;
+    queue.enqueueReadBuffer(buf, CL_FALSE, 0, bytes, std::to_address(start), nullptr, &last_event);
     
-    transfer_last_event.wait();
+    last_event.wait();
 
-    return SortProfile{.first_ev=first_exec_event, .last_ev=last_exec_event};
+    return SortProfile{.first_ev=first_event, .last_ev=last_event};
   }
 
 private:
