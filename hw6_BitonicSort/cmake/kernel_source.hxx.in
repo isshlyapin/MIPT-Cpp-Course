@@ -1,0 +1,9 @@
+#pragma once
+
+namespace ocl_kernels {
+
+inline constexpr const char* BITONIC_SORT_CL = R"CLC( 
+  @KERNEL_TEXT@
+)CLC";
+
+} // namespace ocl_kernels
