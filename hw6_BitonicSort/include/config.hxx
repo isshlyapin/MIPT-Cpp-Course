@@ -14,6 +14,10 @@
 #define COMPARE_CPU 1
 #endif
 
+#ifndef TYPE
+#define TYPE int
+#endif
+
 // Config for program: we can also read it from options
 struct Config {
   int sz;

@@ -5,7 +5,6 @@
 #include "CLI/CLI.hpp"
 #include "CL/opencl.hpp"
 
-#include <algorithm>
 #include <memory>
 #include <chrono>
 #include <vector>
@@ -13,8 +12,6 @@
 #include <iostream>
 #include <stdexcept>
 #include <algorithm>
-
-#define TYPE int
 
 int main(int argc, char **argv) try {
   std::chrono::high_resolution_clock::time_point TimeStart;

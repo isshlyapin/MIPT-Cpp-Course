@@ -3,7 +3,7 @@
 #include <iostream>
 
 #ifndef ANALYZE
-#define ANALYZE 0
+#define ANALYZE 1
 #endif
 
 #define dbgs                                                                   \

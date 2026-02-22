@@ -1,7 +1,7 @@
 #pragma once
 
-#include "config.hxx"
 #include "mydef.hxx"
+#include "config.hxx"
 #include "helpers.hxx"
 #include "kernel_source.hxx"
 
@@ -25,6 +25,11 @@ struct ocl_type_name<float> {
 template<>
 struct ocl_type_name<int> {
   static constexpr const char* value = "int";
+};
+
+template<>
+struct ocl_type_name<double> {
+  static constexpr const char* value = "double";
 };
 
 struct SortProfile {
