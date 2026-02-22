@@ -23,12 +23,45 @@ namespace linal {
 export
 template<typename T>
 class Matrix {
+private:
+  struct ProxyRow {
+    explicit ProxyRow(Vector<T>* row) : row_{row} {}
+
+    T& operator[](size_t idx) { return (*row_)[idx]; }
+    const T& operator[](size_t idx) const { return (*row_)[idx]; }
+  private:
+    Vector<T>* row_;
+  };
+
+  struct ConstProxyRow {
+    explicit ConstProxyRow(const Vector<T>* row) : row_{row} {}
+    
+    const T& operator[](size_t idx) const { return (*row_)[idx]; }
+  private:
+    const Vector<T>* row_;
+  };
+
 public:
   Matrix(size_t rows, size_t cols, const T& val = T{}) {
     data_.resize(rows);
     for (size_t i{0}; i < rows; ++i) {
       data_[i].reserve(cols);
       for (size_t j{0}; j < cols; ++j) { data_[i].push(val); }
+    }
+  }
+
+  template<typename U>
+  requires std::convertible_to<U, T>
+  Matrix(const Matrix<U>& other) {
+    size_t rows = other.nrows();
+    size_t cols = other.ncols();
+
+    data_.resize(rows);
+    for (size_t i{0}; i < rows; ++i) {
+      data_[i].reserve(cols);
+      for (size_t j{0}; j < cols; ++j) { 
+        data_[i].push(static_cast<T>(other[i][j]));
+      }
     }
   }
 
@@ -48,13 +81,16 @@ public:
     }
   }
   
-  const Vector<T>& operator[](size_t idx) const noexcept {
-    return data_[idx];
+  ProxyRow operator[](size_t idx) & noexcept {
+    return ProxyRow{&data_[idx]};
   }
   
-  Vector<T>& operator[](size_t idx) noexcept {
-    return const_cast<Vector<T>&>(static_cast<const Matrix&>(*this)[idx]);
-  }
+  ConstProxyRow operator[](size_t idx) const & noexcept {
+    return ConstProxyRow{&data_[idx]};
+  }  
+
+  ProxyRow operator[](size_t) && = delete;
+  ConstProxyRow operator[](size_t) const && = delete;
 
   [[nodiscard]] 
   size_t nrows() const {
@@ -73,6 +109,13 @@ public:
     return nrows() == ncols();
   }
 
+  void swap_rows(size_t i, size_t j) {
+    if (i >= nrows() || j >= nrows()) {
+      throw std::out_of_range("Row index out of range in swap_rows");
+    }
+    std::swap(data_[i], data_[j]);
+  }
+
   [[nodiscard]]
   double determinant() const requires std::floating_point<T> {
     size_t n = nrows();
@@ -83,7 +126,7 @@ public:
       throw std::logic_error("Matrix must be square for determinant()");
     }
 
-    Matrix<T> tmp(*this);
+    Matrix<double> tmp(*this);
     double det{1.0};
     int sign{1};
 
@@ -101,11 +144,11 @@ public:
       if (max_val < EPS) { return 0.0; }
 
       if (pivot != i) {
-        std::swap(tmp[i], tmp[pivot]);
+        tmp.swap_rows(i, pivot);
         sign *= -1;
       }
 
-      const T diag = tmp[i][i];
+      const double diag = tmp[i][i];
       for (size_t j = i + 1; j < n; ++j) {
         const double factor = tmp[j][i] / diag;
         tmp[j][i] = 0.0;
@@ -130,15 +173,15 @@ public:
       throw std::logic_error("Matrix must be square for determinant()");
     }
 
-    Matrix tmp(*this);
+    Matrix<int64_t> tmp(*this);
 
     int sign{1};
-    int prev_diag = 1;
+    int64_t prev_diag = 1;
     for (size_t i = 0; i < n - 1; ++i) {
       size_t pivot = i;
-      int max_val = std::abs(tmp[pivot][i]);
+      int64_t max_val = std::abs(tmp[pivot][i]);
       for (size_t j = i + 1; j < n; ++j) {
-          int v = std::abs(tmp[j][i]);
+          int64_t v = std::abs(tmp[j][i]);
           if (v > max_val) {
               max_val = v;
               pivot = j;
@@ -147,11 +190,11 @@ public:
       if (max_val == 0) { return 0; }
 
       if (pivot != i) {
-        std::swap(tmp[i], tmp[pivot]);
+        tmp.swap_rows(i, pivot);
         sign *= -1;
       }
 
-      const int diag = tmp[i][i];
+      const int64_t diag = tmp[i][i];
       for (size_t j = i + 1; j < n; ++j) {
         for (size_t k = i + 1; k < n; ++k) {
           tmp[j][k] = (tmp[j][k] * diag - tmp[j][i] * tmp[i][k]) / prev_diag;

@@ -12,6 +12,8 @@ import std;
 
 import linal;
 
+//TODO Параметризованный копирующий конструктор для перекидывания матрицы в double 
+
 int main() {
   try {
     size_t N = 0;
