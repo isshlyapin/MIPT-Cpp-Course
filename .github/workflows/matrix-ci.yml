@@ -17,6 +17,10 @@ jobs:
     container:
       image: isshlyapin/ubuntu_cpp:cxx23
 
+    strategy:
+      matrix:
+        build_type: [Debug, Release]
+
     defaults:
       run:
         working-directory: hw4_Matrix
@@ -28,11 +32,11 @@ jobs:
       - name: Build with Conan
         run: |
           conan config install https://github.com/isshlyapin/conan_config.git
-          conan build . --build=missing -s build_type=Release -pr:a clang21 -o btest_opt=True
+          conan build . --build=missing -s build_type=${{ matrix.build_type }} -pr:a clang21 -o btest_opt=True
 
       - name: Run tests
         run: |
-          ctest --test-dir build/Release/test --output-on-failure --timeout 3
+          ctest --test-dir build/${{ matrix.build_type }}/test --output-on-failure --timeout 3
 
       - name: Run E2E tests
         run: |
