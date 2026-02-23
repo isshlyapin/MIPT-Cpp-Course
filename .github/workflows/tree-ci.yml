@@ -28,7 +28,7 @@ jobs:
       - name: Build with Conan
         run: |
           conan config install https://github.com/isshlyapin/conan_config.git
-          conan build . --build=missing -s build_type=Release -pr:a clang21 -o btest=True
+          conan build . --build=missing -s build_type=Debug -pr:a clang21 -o btest=True
 
       - name: Run tests
         run: |
