@@ -32,4 +32,4 @@ jobs:
 
       - name: Run tests
         run: |
-          ctest --test-dir build/Release/test --output-on-failure --timeout 3
+          ctest --test-dir build/Debug/test --output-on-failure --timeout 3
