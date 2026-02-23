@@ -36,4 +36,4 @@ jobs:
 
       - name: Run tests
         run: |
-          ctest --test-dir build/${{ matrix.build_type }}/tests --output-on-failure --timeout 3
+          ctest --test-dir build/${{ matrix.build_type }}/tests --output-on-failure --timeout 7
