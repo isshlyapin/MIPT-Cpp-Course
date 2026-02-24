@@ -1,6 +1,6 @@
 #include "config.hxx"
 
-#include "CLI/CLI.hpp"
+#include "CLI11.hpp"
 
 #include <iostream>
 #include <string_view>

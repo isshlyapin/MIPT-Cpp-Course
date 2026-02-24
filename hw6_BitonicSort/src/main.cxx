@@ -2,7 +2,7 @@
 #include "config.hxx"
 #include "ocl_bitonic_sort.hxx"
 
-#include "CLI/CLI.hpp"
+#include "CLI11.hpp"
 #include "CL/opencl.hpp"
 
 #include <memory>

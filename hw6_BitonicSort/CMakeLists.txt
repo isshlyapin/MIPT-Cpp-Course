@@ -42,6 +42,7 @@ add_library(bitonic_sort
 target_include_directories(bitonic_sort
     PUBLIC include
     PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/generated
+    PRIVATE lib/CLI
 )
 target_compile_definitions(bitonic_sort
     PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
@@ -53,6 +54,9 @@ target_link_libraries(bitonic_sort PRIVATE OpenCL::OpenCL)
 #-----------------------------------------------------------------------------#
 add_executable(bitonic 
     src/main.cxx
+)
+target_include_directories(bitonic
+    PRIVATE lib/CLI
 )
 target_compile_definitions(bitonic 
     PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
