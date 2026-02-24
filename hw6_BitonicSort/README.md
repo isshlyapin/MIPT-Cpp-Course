@@ -24,7 +24,7 @@
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -<j>
+cmake --build build -j
 ```
 
 После этого бинарник: `./build/bitonic`.
@@ -42,7 +42,7 @@ cmake --build build -<j>
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCOMPARE_CPU=ON -DANALYZE=OFF -DTYPE=int
-cmake --build build -<j>
+cmake --build build -j
 ```
 
 ## Запуск программы
@@ -76,7 +76,7 @@ CLI-аргументы (см. `Config::read`):
 
 ```bash
 cmake -S . -B build -DBUILD_TEST=ON -DCMAKE_BUILD_TYPE=Release
-cmake --build build -<j>
+cmake --build build -j
 ```
 
 Прогон:
