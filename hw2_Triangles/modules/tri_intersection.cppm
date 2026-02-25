@@ -65,7 +65,7 @@ export std::vector<Triangle3> load_triangles(std::istream& in = std::cin) {
         triangles.emplace_back(points[0], points[1], points[2]);
     }
 
-      return triangles;
+    return triangles;
 }
 
 std::vector<Box3> get_boxes(const std::vector<Triangle3>& triangles) {
