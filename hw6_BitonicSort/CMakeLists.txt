@@ -50,20 +50,56 @@ target_compile_definitions(bitonic_sort
 target_link_libraries(bitonic_sort PRIVATE OpenCL::OpenCL)
 
 #-----------------------------------------------------------------------------#
-#                             Executable target                               #
+#                             Benchmark target (random input)                 #
 #-----------------------------------------------------------------------------#
-add_executable(bitonic 
+add_executable(bitonic_benchmark_random
     src/main.cxx
 )
-target_include_directories(bitonic
+target_include_directories(bitonic_benchmark_random
     PRIVATE lib/CLI
 )
-target_compile_definitions(bitonic 
+target_compile_definitions(bitonic_benchmark_random
     PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
+    PRIVATE RANDOM_INPUT=1
+    PRIVATE BENCHMARK=1
     PRIVATE COMPARE_CPU=$<BOOL:${COMPARE_CPU}>
     PRIVATE TYPE=${TYPE}
 )
-target_link_libraries(bitonic PRIVATE OpenCL::OpenCL bitonic_sort)
+target_link_libraries(bitonic_benchmark_random PRIVATE OpenCL::OpenCL bitonic_sort)
+
+#-----------------------------------------------------------------------------#
+#                             Benchmark target (std::cin input)               #
+#-----------------------------------------------------------------------------#
+add_executable(bitonic_benchmark_stdin
+    src/main.cxx
+)
+target_include_directories(bitonic_benchmark_stdin
+    PRIVATE lib/CLI
+)
+target_compile_definitions(bitonic_benchmark_stdin
+    PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
+    PRIVATE BENCHMARK=1
+    PRIVATE COMPARE_CPU=$<BOOL:${COMPARE_CPU}>
+    PRIVATE TYPE=${TYPE}
+)
+target_link_libraries(bitonic_benchmark_stdin PRIVATE OpenCL::OpenCL bitonic_sort)
+
+#-----------------------------------------------------------------------------#
+#                             Verify target (std::cin input)                  #
+#-----------------------------------------------------------------------------#
+add_executable(bitonic_verify
+    src/main.cxx
+)
+target_include_directories(bitonic_verify
+    PRIVATE lib/CLI
+)
+target_compile_definitions(bitonic_verify
+    PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
+    PRIVATE VERIFY=1
+    PRIVATE COMPARE_CPU=$<BOOL:${COMPARE_CPU}>
+    PRIVATE TYPE=${TYPE}
+)
+target_link_libraries(bitonic_verify PRIVATE OpenCL::OpenCL bitonic_sort)
 
 #-----------------------------------------------------------------------------#
 #                             Testing                                         #

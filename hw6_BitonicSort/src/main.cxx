@@ -32,7 +32,12 @@ int main(int argc, char **argv) try {
   OCLBitonicSorter<TYPE> sorter(env, cfg.lsz);
 
   std::vector<TYPE> v(cfg.sz);
+
+#ifdef RANDOM_INPUT
   rand_init(v.begin(), v.end(), -1000, 1000);
+#else
+  for (TYPE& x : v) { std::cin >> x; }
+#endif
 
   // do the sort and get events for profiling
   TimeStart = std::chrono::high_resolution_clock::now();
@@ -45,6 +50,7 @@ int main(int argc, char **argv) try {
     TimeFin - TimeStart
   ).count();
 
+#ifdef BENCHMARK
   std::cout << "GPU wall time measured: " << Dur << " ns" << std::endl;
 
   GPUTimeStart = prof.first_ev.getProfilingInfo<CL_PROFILING_COMMAND_START>();
@@ -52,10 +58,12 @@ int main(int argc, char **argv) try {
   GDur = (GPUTimeFin - GPUTimeStart); // ns
 
   std::cout << "GPU pure time measured: " << GDur << " ns" << std::endl;
+#endif
 
-  if (!std::ranges::is_sorted(v)) {
-    throw std::runtime_error("Sorting failed");
-  }
+#ifdef VERIFY
+  for (const TYPE& x : v) { std::cout << x << " "; }
+  std::cout << std::endl; 
+#endif
 
 #if COMPARE_CPU
   std::vector<TYPE> v2(cfg.sz);
