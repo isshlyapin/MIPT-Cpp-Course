@@ -5,15 +5,18 @@
 
 - `OCLBitonicSorter<T>`: сортировка массива размера $2^k$ (контейнер с contiguous-итераторами).
 - Два ядра: локальная стадия (использует local memory) и глобальная стадия.
-- CLI-утилита `bitonic` для запуска и профилирования.
-- Набор тестов на GoogleTest.
+- CLI-утилиты:
+    - `bitonic_verify` — читает числа из stdin, сортирует и печатает отсортированный массив.
+    - `bitonic_benchmark_random` — бенчмарк на случайном входе (печатает тайминги).
+    - `bitonic_benchmark_stdin` — бенчмарк на входе из stdin (печатает тайминги).
+- Набор unit-тестов на GoogleTest (опционально) + скрипт на Python для запуска e2e тестов.
 
 ## Требования
 
 - CMake `>= 3.20`
 - Компилятор C++20
 - OpenCL SDK/headers + ICD loader (в CMake используется `find_package(OpenCL REQUIRED)`)
-- Заголовки CLI11 (в коде используется `#include "CLI/CLI.hpp"`)
+- python (для e2e-тестов)
 - Для тестов: GoogleTest (`find_package(GTest REQUIRED)`)
 
 Важно: среда `OCLSimpleBitonicEnv` выбирает первую OpenCL-платформу с GPU-девайсами. Если на машине нет доступного GPU OpenCL (или он недоступен через драйвер), запуск `bitonic` и тесты могут падать на инициализации/сборке программы.
@@ -27,7 +30,17 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
 
-После этого бинарник: `./build/bitonic`.
+После этого будут собраны бинарники:
+
+- `./build/bitonic_verify`
+- `./build/bitonic_benchmark_random`
+- `./build/bitonic_benchmark_stdin`
+
+Можно собирать конкретный таргет:
+
+```bash
+cmake --build build -j --target bitonic_verify
+```
 
 ## Опции CMake
 
@@ -37,13 +50,6 @@ cmake --build build -j
 - `-DCOMPARE_CPU=ON|OFF` (по умолчанию `OFF`) — дополнительно печатает время CPU-сортировки (для сравнения/бенчмарка).
 - `-DTYPE=int|float|double` (по умолчанию `int`) — тип элементов, для которого собирается `bitonic`.
 - `-DBUILD_TEST=ON|OFF` (по умолчанию `OFF`) — собирать тесты из `test/`.
-
-Пример конфигурации «для бенчмарка»:
-
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCOMPARE_CPU=ON -DANALYZE=OFF -DTYPE=int
-cmake --build build -j
-```
 
 ## Запуск программы
 
@@ -55,22 +61,36 @@ CLI-аргументы (см. `Config::read`):
 Ограничения на `--lsize`:
 
 - `L > 1`
-- `L * sizeof(TYPE) <= local_mem_size` устройства (проверяется в конструкторе сортера)
+- `L * sizeof(TYPE) <= local_mem_size` устройства
 
 Примеры:
 
 ```bash
-./build/bitonic --size 1048576 --lsize 256
-./build/bitonic --size 16777216 --lsize 512
+./build/bitonic_verify --size 8 --lsize 8 < test/data/3.in
+./build/bitonic_verify --size 32 --lsize 256 < test/data/5.in
 ```
 
-Вывод:
+Вывод `bitonic_verify`: отсортированные числа в одну строку.
+
+Вывод бенчмарков (`bitonic_benchmark_random` / `bitonic_benchmark_stdin`):
 
 - `GPU wall time measured: ... ns` — время «снаружи» (запуск + ожидание).
 - `GPU pure time measured: ... ns` — время между OpenCL events (профилирование очереди).
 - При `-DCOMPARE_CPU=ON`: `CPU time measured: ... ns`.
 
 ## Тесты
+
+### E2E (корректность сортировки)
+
+Собрать `bitonic_verify` и прогнать тесты из `test/data/*.in`:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j --target bitonic_verify
+python3 test/test_e2e.py
+```
+
+### Unit (GoogleTest)
 
 Сборка тестов:
 
@@ -85,14 +105,6 @@ cmake --build build -j
 ctest --test-dir build/test --output-on-failure
 ```
 
-## Бенчмарк
-
-Скрипт [benchmark.py](benchmark.py) запускает `./build/bitonic` на наборах размеров и `--lsize`.
-Для вывода CPU-колонки собирайте с `-DCOMPARE_CPU=ON`.
-
-```bash
-python3 benchmark.py
-```
 
 ## Benchmark report
 
