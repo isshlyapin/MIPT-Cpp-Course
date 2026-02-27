@@ -3,11 +3,9 @@
 #include "CLI11.hpp"
 
 #include <iostream>
-#include <string_view>
 
 inline constexpr int CFG_DEFAULT_LOCAL_SIZE = 256;
 inline constexpr int CFG_DEFAULT_ARRAY_SIZE = 1024;
-inline constexpr std::string_view CFG_DEFAULT_KERNEL_PATH = "src/fast_bitonic_sort.cl";
 
 // dump config to stream
 void Config::dump(std::ostream& os) const {
@@ -19,13 +17,24 @@ void Config::dump(std::ostream& os) const {
 Config Config::read(int argc, char **argv) {
   CLI::App app{"Bitonic Sort"};
 
-  int sz{CFG_DEFAULT_ARRAY_SIZE};
-  int lsz{CFG_DEFAULT_LOCAL_SIZE};
+  int sz{0};
+  int lsz{0};
 
-  app.add_option("--size", sz, "number of elements in the array");
-  app.add_option("--lsize", lsz, "the desired size of local memory GPU");
+  app.add_option("--size", sz, "number of elements in the array")
+    ->check(CLI::PositiveNumber)->default_val(CFG_DEFAULT_ARRAY_SIZE);
 
-  app.parse(argc, argv);
+  app.add_option("--lsize", lsz, "local work-group size (LSZ)")
+    ->check(CLI::PositiveNumber)->default_val(CFG_DEFAULT_LOCAL_SIZE);
+
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::CallForHelp& e) {
+    std::cout << app.help() << std::endl;
+    throw;
+  } catch (const CLI::CallForAllHelp& e) {
+    std::cout << app.help("", CLI::AppFormatMode::All) << std::endl;
+    throw;
+  }
 
   return {.sz = sz,.lsz = lsz};
 }
