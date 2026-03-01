@@ -27,16 +27,19 @@ int main(int argc, char **argv) try {
   auto env = 
     std::make_shared<OCLSimpleBitonicEnv>();
 
-  dump_bitonic_env(*env); dbgs << std::endl;
+  dump_bitonic_env(*env); 
+  dbgs << std::endl;
 
   OCLBitonicSorter<TYPE> sorter(env, cfg.lsz);
 
-  std::vector<TYPE> v(cfg.sz);
+  std::vector<TYPE> v;
 
 #ifdef RANDOM_INPUT
+  v.resize(cfg.sz);
   rand_init(v.begin(), v.end(), -1000, 1000);
 #else
-  for (TYPE& x : v) { std::cin >> x; }
+  TYPE x;
+  while (std::cin >> x) { v.push_back(x); }
 #endif
 
   // do the sort and get events for profiling

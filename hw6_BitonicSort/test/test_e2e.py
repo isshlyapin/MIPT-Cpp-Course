@@ -48,7 +48,7 @@ def main():
 
         n = len(parse_ints(input_text))
         lsize = LSZ
-        cmd = [str(prog), "--size", str(n), "--lsize", str(lsize)]
+        cmd = [str(prog)]
 
         try:
             res = subprocess.run(
