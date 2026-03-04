@@ -1,0 +1,17 @@
+module;
+
+#include <GL/glew.h>
+
+export module isshlyapin.render:shader_source;
+
+namespace ogl_shaders {
+
+export constexpr const GLchar* VERTEX_SHADER = R"CLC(
+@VERTEX_TEXT@
+)CLC";
+
+export constexpr const GLchar* FRAGMENT_SHADER = R"CLC(
+@FRAGMENT_TEXT@
+)CLC";
+
+} // namespace ogl_shaders
