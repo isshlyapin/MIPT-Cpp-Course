@@ -12,7 +12,7 @@ TIMEOUT_SEC = 30
 
 
 def find_program():
-    default = Path("build/bitonic_verify")
+    default = Path("build/gpu_bitonic_verify")
     if default.exists():
         return default
 

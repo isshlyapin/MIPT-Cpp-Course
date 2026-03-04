@@ -32,14 +32,15 @@ cmake --build build -j
 
 После этого будут собраны бинарники:
 
-- `./build/bitonic_verify`
-- `./build/bitonic_benchmark_random`
-- `./build/bitonic_benchmark_stdin`
+- `./build/gpu_bitonic_verify`
+- `./build/cpu_bitonic_verify`
+- `./build/gpu_bitonic_benchmark_stdin`
+- `./build/cpu_bitonic_benchmark_stdin`
 
 Можно собирать конкретный таргет:
 
 ```bash
-cmake --build build -j --target bitonic_verify
+cmake --build build -j --target gpu_bitonic_verify
 ```
 
 ## Опции CMake
@@ -47,36 +48,23 @@ cmake --build build -j --target bitonic_verify
 Все опции задаются при конфигурации CMake:
 
 - `-DANALYZE=ON|OFF` (по умолчанию `OFF`) — включает отладочный вывод.
-- `-DCOMPARE_CPU=ON|OFF` (по умолчанию `OFF`) — дополнительно печатает время CPU-сортировки (для сравнения/бенчмарка).
 - `-DTYPE=int|float|double` (по умолчанию `int`) — тип элементов, для которого собирается `bitonic`.
 - `-DBUILD_TEST=ON|OFF` (по умолчанию `OFF`) — собирать тесты из `test/`.
 
 ## Запуск программы
 
-CLI-аргументы (см. `Config::read`):
-
-- `--size N` — число элементов (по умолчанию `1024`). Должно быть степенью двойки, иначе будет `RUNTIME ERROR: Size must be a power of 2`.
-- `--lsize L` — параметр local size (по умолчанию `256`). Передаётся в `OCLBitonicSorter` и используется при сборке OpenCL-программы как `-DLSZ=L`.
-
-Ограничения на `--lsize`:
-
-- `L > 1`
-- `L * sizeof(TYPE) <= local_mem_size` устройства
+- `--size N` — число элементов (только для степеней двойки). Необязательный параметр, по умолчанию читает до `EOF`
+- `--lsize L` — параметр local size (по умолчанию `256`). Передаётся в `OCLBitonicSorter` и используется при сборке OpenCL-программы как `WorkGroupSize`.
 
 Примеры:
 
 ```bash
-./build/bitonic_verify --size 8 --lsize 8 < test/data/3.in
-./build/bitonic_verify --size 32 --lsize 256 < test/data/5.in
+./build/gpu_bitonic_verify < test/data/3.in
+./build/gpu_bitonic_verify --lsize 8 < test/data/3.in
+
+./build/cpu_bitonic_benchmark_stdin < test/data/10.in
+./build/cpu_bitonic_benchmark_stdin --lsize 128 < test/data/10.in
 ```
-
-Вывод `bitonic_verify`: отсортированные числа в одну строку.
-
-Вывод бенчмарков (`bitonic_benchmark_random` / `bitonic_benchmark_stdin`):
-
-- `GPU wall time measured: ... ns` — время «снаружи» (запуск + ожидание).
-- `GPU pure time measured: ... ns` — время между OpenCL events (профилирование очереди).
-- При `-DCOMPARE_CPU=ON`: `CPU time measured: ... ns`.
 
 ## Тесты
 
@@ -86,7 +74,7 @@ CLI-аргументы (см. `Config::read`):
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j --target bitonic_verify
+cmake --build build -j --target gpu_bitonic_verify
 python3 test/test_e2e.py
 ```
 
