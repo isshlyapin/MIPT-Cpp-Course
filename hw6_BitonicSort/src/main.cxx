@@ -14,13 +14,6 @@
 #include <algorithm>
 
 int main(int argc, char **argv) try {
-  std::chrono::high_resolution_clock::time_point TimeStart;
-  std::chrono::high_resolution_clock::time_point TimeFin;
-  cl_ulong GPUTimeStart = 0;
-  cl_ulong GPUTimeFin   = 0;
-  int64_t  Dur  = 0;
-  uint64_t GDur = 0;
-
   const Config cfg = Config::read(argc, argv);
   dbgs << "Hello from bitonic sort. Config:\n" << cfg << std::endl;
 
@@ -33,7 +26,6 @@ int main(int argc, char **argv) try {
   OCLBitonicSorter<TYPE> sorter(env, cfg.lsz);
 
   std::vector<TYPE> v;
-
 #ifdef RANDOM_INPUT
   v.resize(cfg.sz);
   rand_init(v.begin(), v.end(), -1000, 1000);
@@ -42,46 +34,29 @@ int main(int argc, char **argv) try {
   while (std::cin >> x) { v.push_back(x); }
 #endif
 
-  // do the sort and get events for profiling
+  std::chrono::high_resolution_clock::time_point TimeStart;
+  std::chrono::high_resolution_clock::time_point TimeFin;
+
   TimeStart = std::chrono::high_resolution_clock::now();
-
-  const SortProfile prof = sorter.sort(v.begin(), v.end(), cl::QueueProperties::Profiling);
-
-  TimeFin = std::chrono::high_resolution_clock::now();
-
-  Dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    TimeFin - TimeStart
-  ).count();
-
-#ifdef BENCHMARK
-  std::cout << "GPU wall time measured: " << Dur << " ns" << std::endl;
-
-  GPUTimeStart = prof.first_ev.getProfilingInfo<CL_PROFILING_COMMAND_START>();
-  GPUTimeFin   = prof.last_ev.getProfilingInfo<CL_PROFILING_COMMAND_END>();
-  GDur = (GPUTimeFin - GPUTimeStart); // ns
-
-  std::cout << "GPU pure time measured: " << GDur << " ns" << std::endl;
+#if defined(GPU_SORT)
+  sorter.sort(v.begin(), v.end(), cl::QueueProperties::Profiling);
+#elif defined(CPU_SORT)
+  std::ranges::sort(v);
+#else
+  static_assert(false, "Sort type should be defined");
 #endif
-
+  TimeFin = std::chrono::high_resolution_clock::now();
+    
 #ifdef VERIFY
-  for (const TYPE& x : v) { std::cout << x << " "; }
+  for (auto x : v) { std::cout << x << " "; }
   std::cout << std::endl; 
 #endif
 
-#if COMPARE_CPU
-  std::vector<TYPE> v2(cfg.sz);
-
-  TimeStart = std::chrono::high_resolution_clock::now();
- 
-  std::ranges::sort(v2);
- 
-  TimeFin = std::chrono::high_resolution_clock::now();
- 
-  Dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    TimeFin - TimeStart
-  ).count();
-
-  std::cout << "CPU time measured: " << Dur << " ns" << std::endl;
+#ifdef BENCHMARK
+  const auto Dur = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      TimeFin - TimeStart
+    ).count();
+  std::cout << Dur << std::endl;
 #endif
 } catch (const cl::BuildError &err) {
   std::cerr << "OCL BUILD ERROR: " << err.err() << ":" << err.what() << std::endl;

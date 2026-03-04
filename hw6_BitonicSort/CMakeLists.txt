@@ -52,54 +52,87 @@ target_link_libraries(bitonic_sort PRIVATE OpenCL::OpenCL)
 #-----------------------------------------------------------------------------#
 #                             Benchmark target (random input)                 #
 #-----------------------------------------------------------------------------#
-add_executable(bitonic_benchmark_random
-    src/main.cxx
-)
-target_include_directories(bitonic_benchmark_random
-    PRIVATE lib/CLI
-)
-target_compile_definitions(bitonic_benchmark_random
-    PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
-    PRIVATE RANDOM_INPUT=1
-    PRIVATE BENCHMARK=1
-    PRIVATE COMPARE_CPU=$<BOOL:${COMPARE_CPU}>
-    PRIVATE TYPE=${TYPE}
-)
-target_link_libraries(bitonic_benchmark_random PRIVATE OpenCL::OpenCL bitonic_sort)
+# add_executable(bitonic_benchmark_random
+#     src/main.cxx
+# )
+# target_include_directories(bitonic_benchmark_random
+#     PRIVATE lib/CLI
+# )
+# target_compile_definitions(bitonic_benchmark_random
+#     PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
+#     PRIVATE RANDOM_INPUT=1
+#     PRIVATE BENCHMARK=1
+#     PRIVATE TYPE=${TYPE}
+# )
+# target_link_libraries(bitonic_benchmark_random PRIVATE OpenCL::OpenCL bitonic_sort)
 
 #-----------------------------------------------------------------------------#
-#                             Benchmark target (std::cin input)               #
+#                         GPU Benchmark target (std::cin input)               #
 #-----------------------------------------------------------------------------#
-add_executable(bitonic_benchmark_stdin
+add_executable(gpu_bitonic_benchmark_stdin
     src/main.cxx
 )
-target_include_directories(bitonic_benchmark_stdin
+target_include_directories(gpu_bitonic_benchmark_stdin
     PRIVATE lib/CLI
 )
-target_compile_definitions(bitonic_benchmark_stdin
+target_compile_definitions(gpu_bitonic_benchmark_stdin
     PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
+    PRIVATE GPU_SORT=1
     PRIVATE BENCHMARK=1
-    PRIVATE COMPARE_CPU=$<BOOL:${COMPARE_CPU}>
     PRIVATE TYPE=${TYPE}
 )
-target_link_libraries(bitonic_benchmark_stdin PRIVATE OpenCL::OpenCL bitonic_sort)
+target_link_libraries(gpu_bitonic_benchmark_stdin PRIVATE OpenCL::OpenCL bitonic_sort)
 
 #-----------------------------------------------------------------------------#
-#                             Verify target (std::cin input)                  #
+#                         CPU Benchmark target (std::cin input)               #
 #-----------------------------------------------------------------------------#
-add_executable(bitonic_verify
+add_executable(cpu_bitonic_benchmark_stdin
     src/main.cxx
 )
-target_include_directories(bitonic_verify
+target_include_directories(cpu_bitonic_benchmark_stdin
     PRIVATE lib/CLI
 )
-target_compile_definitions(bitonic_verify
+target_compile_definitions(cpu_bitonic_benchmark_stdin
     PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
+    PRIVATE CPU_SORT=1
+    PRIVATE BENCHMARK=1
+    PRIVATE TYPE=${TYPE}
+)
+target_link_libraries(cpu_bitonic_benchmark_stdin PRIVATE OpenCL::OpenCL bitonic_sort)
+
+#-----------------------------------------------------------------------------#
+#                         GPU Verify target (std::cin input)                  #
+#-----------------------------------------------------------------------------#
+add_executable(gpu_bitonic_verify
+    src/main.cxx
+)
+target_include_directories(gpu_bitonic_verify
+    PRIVATE lib/CLI
+)
+target_compile_definitions(gpu_bitonic_verify
+    PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
+    PRIVATE GPU_SORT=1
     PRIVATE VERIFY=1
-    PRIVATE COMPARE_CPU=$<BOOL:${COMPARE_CPU}>
     PRIVATE TYPE=${TYPE}
 )
-target_link_libraries(bitonic_verify PRIVATE OpenCL::OpenCL bitonic_sort)
+target_link_libraries(gpu_bitonic_verify PRIVATE OpenCL::OpenCL bitonic_sort)
+
+#-----------------------------------------------------------------------------#
+#                         CPU Verify target (std::cin input)                  #
+#-----------------------------------------------------------------------------#
+add_executable(cpu_bitonic_verify
+    src/main.cxx
+)
+target_include_directories(cpu_bitonic_verify
+    PRIVATE lib/CLI
+)
+target_compile_definitions(cpu_bitonic_verify
+    PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
+    PRIVATE CPU_SORT=1
+    PRIVATE VERIFY=1
+    PRIVATE TYPE=${TYPE}
+)
+target_link_libraries(cpu_bitonic_verify PRIVATE OpenCL::OpenCL bitonic_sort)
 
 #-----------------------------------------------------------------------------#
 #                             Testing                                         #
