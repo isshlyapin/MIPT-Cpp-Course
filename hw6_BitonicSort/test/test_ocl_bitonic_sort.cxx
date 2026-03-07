@@ -6,9 +6,12 @@
 
 #include <memory>
 #include <vector>
-#include <random>
 #include <algorithm>
 #include <stdexcept>
+
+using namespace iss::ocl;
+
+namespace {
 
 template <typename T>
 void test_sorting(size_t size, size_t lsz) {
@@ -26,6 +29,8 @@ void test_sorting(size_t size, size_t lsz) {
     EXPECT_EQ(data, expected);
 }
 
+} // namespace
+
 TEST(OCLBitonicSorterTest, InvalidLocalSizeThrowsException) {
     auto env = std::make_shared<OCLSimpleBitonicEnv>();
     
@@ -40,13 +45,13 @@ TEST(OCLBitonicSorterTest, InvalidLocalSizeThrowsException) {
     EXPECT_THROW(OCLBitonicSorter<int>(env, max_lsz + 1), std::runtime_error);
 }
 
-TEST(OCLBitonicSorterTest, InvalidInputSizeThrowsException) {
-    auto env = std::make_shared<OCLSimpleBitonicEnv>();
-    OCLBitonicSorter<int> sorter(env, 256);
+// TEST(OCLBitonicSorterTest, InvalidInputSizeThrowsException) {
+//     auto env = std::make_shared<OCLSimpleBitonicEnv>();
+//     OCLBitonicSorter<int> sorter(env, 256);
     
-    std::vector<int> data(3); // Not a power of 2
-    EXPECT_THROW(sorter.sort(data.begin(), data.end()), std::runtime_error);
-}
+//     std::vector<int> data(3); // Not a power of 2
+//     EXPECT_THROW(sorter.sort(data.begin(), data.end()), std::runtime_error);
+// }
 
 TEST(OCLBitonicSorterTest, SortIntSmall) {
     test_sorting<int>(16, 4);
@@ -98,4 +103,12 @@ TEST(OCLBitonicSorterTest, SortAllIdentical) {
     sorter.sort(data.begin(), data.end());
     
     EXPECT_EQ(data, expected);
+}
+
+TEST(OCLBitonicSorterTest, SortRandomSize) {
+    test_sorting<int>(12345, 256);
+    test_sorting<int>(67890, 256);
+
+    test_sorting<float>(12345, 128);
+    test_sorting<float>(67890, 128);
 }

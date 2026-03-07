@@ -13,6 +13,8 @@
 #include <stdexcept>
 #include <algorithm>
 
+using namespace iss::ocl;
+
 int main(int argc, char **argv) try {
   const Config cfg = Config::read(argc, argv);
   dbgs << "Hello from bitonic sort. Config:\n" << cfg << std::endl;
@@ -39,7 +41,7 @@ int main(int argc, char **argv) try {
 
   TimeStart = std::chrono::high_resolution_clock::now();
 #if defined(GPU_SORT)
-  sorter.sort(v.begin(), v.end(), cl::QueueProperties::Profiling);
+  sorter.sort(v.begin(), v.end());
 #elif defined(CPU_SORT)
   std::ranges::sort(v);
 #else

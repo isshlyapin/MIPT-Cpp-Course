@@ -18,6 +18,8 @@
 #define TYPE int
 #endif
 
+namespace iss::ocl {
+  
 // Config for program: we can also read it from options
 struct Config {
   int sz;
@@ -31,3 +33,5 @@ static std::ostream& operator<<(std::ostream& os, const Config& cfg) {
   cfg.dump(os);
   return os;
 }
+  
+} // namespace iss::ocl

@@ -4,6 +4,8 @@
 #include <concepts>
 #include <iterator>
 
+namespace iss::ocl {
+
 constexpr const int SEED = 42;
 
 template <typename It>
@@ -34,3 +36,11 @@ inline size_t largest_divisor_leq_limit(size_t dividend, size_t limiter) {
 inline bool is_power_of_2(size_t x) {
   return (x > 0) && ((x & (x - 1)) == 0);
 }
+
+inline size_t next_power_of_2(size_t x) {
+  size_t power = 2;
+  while (power < x) { power <<= 1; }
+  return power;
+}
+
+} // namespace iss::ocl

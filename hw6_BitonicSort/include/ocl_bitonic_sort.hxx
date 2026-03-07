@@ -8,11 +8,14 @@
 #include "CL/opencl.hpp"
 
 #include <memory>
+#include <limits>
 #include <cstddef>
 #include <concepts>
 #include <iterator>
 #include <stdexcept>
 #include <string_view>
+
+namespace iss::ocl {
 
 template <typename T>
 struct ocl_type_name;
@@ -103,47 +106,54 @@ public:
   requires std::same_as<std::iter_value_t<It>, T>
   SortProfile sort(It start, It end, cl::QueueProperties qprops) {
     const size_t sz = std::distance(start, end);
-    if (!is_power_of_2(sz)) {
-      throw std::runtime_error("Size must be a power of 2");
-    }
-    const size_t bytes = sz * sizeof(T);
+    const size_t aligned_sz = next_power_of_2(sz);
 
-    const size_t right_lsz = largest_divisor_leq_limit(sz, lsz_);
+    const std::vector<T> padding(aligned_sz - sz, std::numeric_limits<T>::max());
+
+    const size_t src_bytes = sz * sizeof(T);
+    const size_t padding_bytes = (aligned_sz - sz) * sizeof(T);
+
+    const size_t right_lsz = largest_divisor_leq_limit(aligned_sz, lsz_);
     dbgs << "\nSorting sequence of size: " << sz        << "\n";
+    dbgs << "Aligned size: "               << aligned_sz << "\n";
     dbgs << "Global local size: "          << lsz_      << "\n";
     dbgs << "Right local size: "           << right_lsz << "\n\n";
 
     cl::CommandQueue queue(env_->get_context(), qprops);
     
-    cl::Buffer buf(env_->get_context(), CL_MEM_READ_WRITE, bytes);
+    cl::Buffer buf(env_->get_context(), CL_MEM_READ_WRITE, src_bytes + padding_bytes);
 
     cl::Event first_event;
-    queue.enqueueWriteBuffer(buf, CL_FALSE, 0, bytes, std::to_address(start), nullptr, &first_event);
+    queue.enqueueWriteBuffer(buf, CL_FALSE, 0, src_bytes, std::to_address(start), nullptr, &first_event);
+    if (padding_bytes > 0) {
+      queue.enqueueWriteBuffer(buf, CL_FALSE, src_bytes, padding_bytes, padding.data());
+    }
+    // queue.enqueueWriteBuffer(buf, CL_FALSE, src_bytes, padding_bytes, padding.data());
 
     size_t k   = 2;  
     size_t cnt = 2;
-    for (; cnt <= sz && cnt <= right_lsz; cnt <<= 1, k <<= 1) {
+    for (; cnt <= aligned_sz && cnt <= right_lsz; cnt <<= 1, k <<= 1) {
       lsort_kernel_(
-        cl::EnqueueArgs(queue, cl::NDRange(sz), cl::NDRange(right_lsz)),
-        buf, sz, cnt, k
+        cl::EnqueueArgs(queue, cl::NDRange(aligned_sz), cl::NDRange(right_lsz)),
+        buf, aligned_sz, cnt, k
       );
     }
 
-    for (; cnt <= sz; cnt <<= 1) {
+    for (; cnt <= aligned_sz; cnt <<= 1) {
       for (size_t j = cnt; j > right_lsz; j >>= 1) {
         gsort_kernel_(
-          cl::EnqueueArgs(queue, cl::NDRange(sz), cl::NDRange(right_lsz)),
-          buf, sz, cnt, j
+          cl::EnqueueArgs(queue, cl::NDRange(aligned_sz), cl::NDRange(right_lsz)),
+          buf, aligned_sz, cnt, j
         );
       }
       lsort_kernel_(
-        cl::EnqueueArgs(queue, cl::NDRange(sz), cl::NDRange(right_lsz)),
-        buf, sz, cnt, right_lsz
+        cl::EnqueueArgs(queue, cl::NDRange(aligned_sz), cl::NDRange(right_lsz)),
+        buf, aligned_sz, cnt, right_lsz
       );
     }
 
     cl::Event last_event;
-    queue.enqueueReadBuffer(buf, CL_FALSE, 0, bytes, std::to_address(start), nullptr, &last_event);
+    queue.enqueueReadBuffer(buf, CL_FALSE, 0, src_bytes, std::to_address(start), nullptr, &last_event);
     
     last_event.wait();
 
@@ -175,3 +185,5 @@ private:
 };
 
 void dump_bitonic_env(const IOCLBitonicEnv& env);
+
+} // namespace iss::ocl

@@ -12,6 +12,8 @@
 
 #include <stdexcept>
 
+namespace iss::ocl {
+
 // select the first platform with a GPU device
 cl::Platform OCLSimpleBitonicEnv::select_platform() {
   cl::vector<cl::Platform> platforms;
@@ -68,3 +70,5 @@ void dump_bitonic_env(const IOCLBitonicEnv& env) {
     dbgs << "\t\tCompute units: " << d_compute_units << "\n";
   }
 }
+
+} // namespace iss::ocl

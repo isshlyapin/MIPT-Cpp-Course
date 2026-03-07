@@ -4,6 +4,8 @@
 
 #include <iostream>
 
+namespace iss::ocl {
+
 inline constexpr int CFG_DEFAULT_LOCAL_SIZE = 256;
 inline constexpr int CFG_DEFAULT_ARRAY_SIZE = 1024;
 
@@ -38,3 +40,5 @@ Config Config::read(int argc, char **argv) {
 
   return {.sz = sz,.lsz = lsz};
 }
+
+} // namespace iss::ocl
