@@ -15,7 +15,7 @@ namespace {
 
 template <typename T>
 void test_sorting(size_t size, size_t lsz) {
-    auto env = std::make_shared<OCLSimpleBitonicEnv>();
+    auto env = std::make_shared<GpuBitonicEnv>();
     OCLBitonicSorter<T> sorter(env, lsz);
     
     std::vector<T> data(size);
@@ -32,7 +32,7 @@ void test_sorting(size_t size, size_t lsz) {
 } // namespace
 
 TEST(OCLBitonicSorterTest, InvalidLocalSizeThrowsException) {
-    auto env = std::make_shared<OCLSimpleBitonicEnv>();
+    auto env = std::make_shared<GpuBitonicEnv>();
     
     // lsz = 0 is invalid
     EXPECT_THROW(OCLBitonicSorter<int>(env, 0), std::runtime_error);
@@ -66,7 +66,7 @@ TEST(OCLBitonicSorterTest, SortFloat) {
 }
 
 TEST(OCLBitonicSorterTest, SortAlreadySorted) {
-    auto env = std::make_shared<OCLSimpleBitonicEnv>();
+    auto env = std::make_shared<GpuBitonicEnv>();
     OCLBitonicSorter<int> sorter(env, 256);
     
     std::vector<int> data(1024);
@@ -79,7 +79,7 @@ TEST(OCLBitonicSorterTest, SortAlreadySorted) {
 }
 
 TEST(OCLBitonicSorterTest, SortReverseSorted) {
-    auto env = std::make_shared<OCLSimpleBitonicEnv>();
+    auto env = std::make_shared<GpuBitonicEnv>();
     OCLBitonicSorter<int> sorter(env, 256);
     
     std::vector<int> data(1024);
@@ -94,7 +94,7 @@ TEST(OCLBitonicSorterTest, SortReverseSorted) {
 }
 
 TEST(OCLBitonicSorterTest, SortAllIdentical) {
-    auto env = std::make_shared<OCLSimpleBitonicEnv>();
+    auto env = std::make_shared<GpuBitonicEnv>();
     OCLBitonicSorter<int> sorter(env, 256);
     
     std::vector<int> data(1024, 42);

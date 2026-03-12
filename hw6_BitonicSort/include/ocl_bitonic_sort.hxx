@@ -1,9 +1,11 @@
 #pragma once
 
+#include "types.hxx"
 #include "mydef.hxx"
 #include "config.hxx"
 #include "helpers.hxx"
 #include "kernel_source.hxx"
+#include "ocl_bitonic_env.hxx"
 
 #include "CL/opencl.hpp"
 
@@ -17,167 +19,116 @@
 
 namespace iss::ocl {
 
-template <typename T>
-struct ocl_type_name;
-
-template<>
-struct ocl_type_name<float> {
-  static constexpr const char* value = "float";
-};
-
-template<>
-struct ocl_type_name<int> {
-  static constexpr const char* value = "int";
-};
-
-template<>
-struct ocl_type_name<double> {
-  static constexpr const char* value = "double";
-};
-
-struct SortProfile {
-  cl::Event first_ev;
-  cl::Event last_ev;
-};
-
-class IOCLBitonicEnv {
-public:
-  virtual ~IOCLBitonicEnv() = default;
-
-  [[nodiscard]] virtual const cl::Platform&     get_platform()  const = 0;
-  [[nodiscard]] virtual const cl::Context&      get_context()   const = 0;
-
-  [[nodiscard]] virtual cl_ulong get_local_mem_size() const = 0;
-
-protected:
-  IOCLBitonicEnv() = default;
-
-  IOCLBitonicEnv(const IOCLBitonicEnv&) = default;
-  IOCLBitonicEnv& operator=(const IOCLBitonicEnv&) = default;
-
-  IOCLBitonicEnv(IOCLBitonicEnv&&) = default;
-  IOCLBitonicEnv& operator=(IOCLBitonicEnv&&) = default; 
-};
-
-// Select the first platform with a GPU devices
-class OCLSimpleBitonicEnv : public IOCLBitonicEnv {
-public:
-  OCLSimpleBitonicEnv() 
-    : platform_(select_platform()), context_(get_context(platform_)) {}
-
-  [[nodiscard]] const cl::Platform& get_platform() const override { return platform_;  }
-  [[nodiscard]] const cl::Context&  get_context()  const override { return context_;   }
-
-  [[nodiscard]] cl_ulong get_local_mem_size() const override {
-    cl::vector<cl::Device> devices = context_.getInfo<CL_CONTEXT_DEVICES>();
-    return devices.front().getInfo<CL_DEVICE_LOCAL_MEM_SIZE>();
-  }
-private:
-  static cl::Platform select_platform();
-  static cl::Context  get_context(const cl::Platform& plt);
-
-  cl::Platform platform_;
-  cl::Context  context_;
-};
-
-template<typename T>
+template<typename T, BitonicEnv Env>
 class OCLBitonicSorter {
 public:
-  OCLBitonicSorter(std::shared_ptr<const IOCLBitonicEnv> env, size_t lsz) 
-    : lsz_(lsz), env_(std::move(env)), 
-      program_(buildProgram(env_->get_context(), ocl_type_name<T>::value, lsz)),
-      gsort_kernel_(program_, "global_bitonic_sort"), lsort_kernel_(program_, "local_bitonic_sort") {
-      if (!is_correct_lsz(lsz)) {
-        throw std::runtime_error("Invalid local size");
-      }
-
-      dbgs << "Create OCLBitonicSorter:" << "\n";
-      dbgs << "\tSelected type: "        << ocl_type_name<T>::value << "\n";
-      dbgs << "\tSelected local size: "  << lsz_                    << "\n";
-    }
+  OCLBitonicSorter(const Env& env, size_t lsz)
+    : env_(env), lsz_(validate_lsz(lsz)),
+      program_(buildProgram()),
+      gsort_kernel_(program_, "global_bitonic_sort"), 
+      lsort_kernel_(program_, "local_bitonic_sort") {
+    dbgs << "Create OCLBitonicSorter:" << "\n";
+    dbgs << "\tSelected type: "        << ocl_type_name<T>::value << "\n";
+    dbgs << "\tSelected local size: "  << lsz_                    << "\n";
+  }
 
   template<std::contiguous_iterator It>
   requires std::same_as<std::iter_value_t<It>, T>
   void sort(It start, It end) {
-    sort(start, end, cl::QueueProperties::None);
-  }
+    const size_t size = end - start;
+    if (size < 2) { return; }
 
-  template<std::contiguous_iterator It>
-  requires std::same_as<std::iter_value_t<It>, T>
-  SortProfile sort(It start, It end, cl::QueueProperties qprops) {
-    const size_t sz = std::distance(start, end);
-    const size_t aligned_sz = next_power_of_2(sz);
+    const auto& context = env_->get_context();
+    cl::CommandQueue queue(context);
 
-    const std::vector<T> padding(aligned_sz - sz, std::numeric_limits<T>::max());
+    const size_t source_bytes = size * sizeof(T);
 
-    const size_t src_bytes = sz * sizeof(T);
-    const size_t padding_bytes = (aligned_sz - sz) * sizeof(T);
+    auto [buffer, aligned_size] = 
+      create_aligned_buffer(size, context);
 
-    const size_t right_lsz = largest_divisor_leq_limit(aligned_sz, lsz_);
-    dbgs << "\nSorting sequence of size: " << sz        << "\n";
-    dbgs << "Aligned size: "               << aligned_sz << "\n";
-    dbgs << "Global local size: "          << lsz_      << "\n";
-    dbgs << "Right local size: "           << right_lsz << "\n\n";
+    const size_t local_size = 
+      largest_divisor_leq_limit(aligned_size, lsz_);
 
-    cl::CommandQueue queue(env_->get_context(), qprops);
+    dbgs << "\nSorting sequence\n"
+          << "\tsize: "                 << size         << "\n"
+          << "\taligned size: "         << aligned_size << "\n"
+          << "\tglobal local size: "    << lsz_         << "\n"
+          << "\teffective local size: " << local_size   << "\n\n";
+
+    fill_buffer(queue, buffer, size, std::to_address(start));
+    pad_buffer(queue, buffer, size, aligned_size);
     
-    cl::Buffer buf(env_->get_context(), CL_MEM_READ_WRITE, src_bytes + padding_bytes);
+    sort_pow2(queue, buffer, aligned_size, local_size);
 
-    cl::Event first_event;
-    queue.enqueueWriteBuffer(buf, CL_FALSE, 0, src_bytes, std::to_address(start), nullptr, &first_event);
-    if (padding_bytes > 0) {
-      queue.enqueueWriteBuffer(buf, CL_FALSE, src_bytes, padding_bytes, padding.data());
-    }
-    // queue.enqueueWriteBuffer(buf, CL_FALSE, src_bytes, padding_bytes, padding.data());
-
-    size_t k   = 2;  
-    size_t cnt = 2;
-    for (; cnt <= aligned_sz && cnt <= right_lsz; cnt <<= 1, k <<= 1) {
-      lsort_kernel_(
-        cl::EnqueueArgs(queue, cl::NDRange(aligned_sz), cl::NDRange(right_lsz)),
-        buf, aligned_sz, cnt, k
-      );
-    }
-
-    for (; cnt <= aligned_sz; cnt <<= 1) {
-      for (size_t j = cnt; j > right_lsz; j >>= 1) {
-        gsort_kernel_(
-          cl::EnqueueArgs(queue, cl::NDRange(aligned_sz), cl::NDRange(right_lsz)),
-          buf, aligned_sz, cnt, j
-        );
-      }
-      lsort_kernel_(
-        cl::EnqueueArgs(queue, cl::NDRange(aligned_sz), cl::NDRange(right_lsz)),
-        buf, aligned_sz, cnt, right_lsz
-      );
-    }
-
-    cl::Event last_event;
-    queue.enqueueReadBuffer(buf, CL_FALSE, 0, src_bytes, std::to_address(start), nullptr, &last_event);
-    
-    last_event.wait();
-
-    return SortProfile{.first_ev=first_event, .last_ev=last_event};
+    read_buffer(queue, buffer, size, std::to_address(start));
   }
 
 private:
-  [[nodiscard]] bool is_correct_lsz(size_t lsz) const {    
-    return lsz > 1 && (lsz * sizeof(T)) <= env_->get_local_mem_size();
+  size_t validate_lsz(size_t lsz) const {
+    if (lsz <= 1 || (lsz * sizeof(T)) > env_.get_local_mem_size()) {
+      throw std::runtime_error("Invalid local size: " + std::to_string(lsz));
+    }
+    return lsz;
   }
 
-  cl::Program buildProgram(const cl::Context& context, std::string_view type_name, size_t lsz)  {
+  cl::Program buildProgram() const {
     std::string opts = 
-      std::string("-DTYPE=") + std::string(type_name) + " " +
-      std::string("-DLSZ=")  + std::to_string(lsz);
+      std::string("-DTYPE=") + std::string(ocl_type_name<T>::value) + " " +
+      std::string("-DLSZ=")  + std::to_string(lsz_);
     
-    cl::Program program(context, ocl_kernels::BITONIC_SORT_CL);
+    cl::Program program(env_.get_context(), ocl_kernels::BITONIC_SORT_CL);
     program.build(opts.c_str());
     
     return program;
   }
+
+  std::tuple<cl::Buffer, size_t> create_aligned_buffer(size_t sz, cl::Context& context) const {
+    const size_t aligned_sz = next_power_of_2(sz);
+    const auto bytes = aligned_sz * sizeof(T);
+    return {cl::Buffer(context, CL_MEM_READ_WRITE, bytes), aligned_sz};
+  }
+
+  void fill_buffer(cl::CommandQueue& queue, cl::Buffer& buf, size_t sz, const T* source) const {
+    queue.enqueueWriteBuffer(buf, CL_FALSE, 0, sz * sizeof(T), source);
+  }
+
+  void read_buffer(cl::CommandQueue& queue, cl::Buffer& buf, size_t sz, T* dest) const {
+    queue.enqueueReadBuffer(buf, CL_TRUE, 0, sz * sizeof(T), dest);
+  }
+
+  void pad_buffer(cl::CommandQueue& queue, cl::Buffer& buf, size_t sz, size_t aligned_sz) const {
+    if (aligned_sz > sz) {
+      const std::vector<T> padding(aligned_sz - sz, std::numeric_limits<T>::max());
+      const auto padding_bytes = (aligned_sz - sz) * sizeof(T);
+      queue.enqueueWriteBuffer(buf, CL_FALSE, sz * sizeof(T), padding_bytes, padding.data());
+    }
+  }
+
+  void sort_pow2(cl::CommandQueue& queue, cl::Buffer& buf, size_t sz, size_t lsz) const {
+    for (size_t merge_sz = 2; merge_sz <= sz; merge_sz <<= 1) {
+      for (size_t sort_sz = merge_sz; sort_sz > lsz; sort_sz >>= 1) {
+        sort_global(queue, buf, sz, lsz, merge_sz, sort_sz);
+      }
+      sort_local(queue, buf, sz, lsz, merge_sz, lsz);
+    }
+  }
+
+  void sort_local(cl::CommandQueue& queue, cl::Buffer& buf, size_t sz, size_t lsz, size_t merge_sz, size_t sort_sz) {
+    lsort_kernel_(
+      cl::EnqueueArgs(queue, cl::NDRange(sz), cl::NDRange(lsz)),
+      buf, sz, merge_sz, sort_sz
+    );
+  }
+
+  void sort_global(cl::CommandQueue& queue, cl::Buffer& buf, size_t sz, size_t lsz, size_t merge_sz, size_t sort_sz) {
+    gsort_kernel_(
+      cl::EnqueueArgs(queue, cl::NDRange(sz), cl::NDRange(lsz)),
+      buf, sz, merge_sz, sort_sz
+    );
+  }
  
+  Env env_;
   size_t lsz_;
-  std::shared_ptr<const IOCLBitonicEnv> env_;
 
   cl::Program program_;
   cl::KernelFunctor<cl::Buffer, int, int, int> gsort_kernel_;

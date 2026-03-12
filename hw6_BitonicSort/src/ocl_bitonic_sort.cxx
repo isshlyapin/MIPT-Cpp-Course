@@ -14,33 +14,6 @@
 
 namespace iss::ocl {
 
-// select the first platform with a GPU device
-cl::Platform OCLSimpleBitonicEnv::select_platform() {
-  cl::vector<cl::Platform> platforms;
-  cl::Platform::get(&platforms);
-
-  for (auto p : platforms) {
-    std::vector<cl::Device> devices;
-    p.getDevices(CL_DEVICE_TYPE_GPU, &devices);
-    
-    if (!devices.empty()) { return p; }
-  }
-
-  throw std::runtime_error("No platform selected");
-}
-
-// get context for selected platform and first GPU device
-cl::Context OCLSimpleBitonicEnv::get_context(const cl::Platform& plt) {
-  cl::vector<cl::Device> devices;
-  plt.getDevices(CL_DEVICE_TYPE_GPU, &devices);
-
-  if (devices.empty()) {
-    throw std::runtime_error("No GPU device found on platform");
-  }
-
-  return cl::Context(devices.front());
-}
-
 void dump_bitonic_env(const IOCLBitonicEnv& env) {
   const cl::string plt_name    = env.get_platform().getInfo<CL_PLATFORM_NAME>();
   const cl::string plt_vendor  = env.get_platform().getInfo<CL_PLATFORM_VENDOR>();

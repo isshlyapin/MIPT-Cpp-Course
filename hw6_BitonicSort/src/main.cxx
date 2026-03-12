@@ -20,7 +20,7 @@ int main(int argc, char **argv) try {
   dbgs << "Hello from bitonic sort. Config:\n" << cfg << std::endl;
 
   auto env = 
-    std::make_shared<OCLSimpleBitonicEnv>();
+    std::make_shared<GpuBitonicEnv>();
 
   dump_bitonic_env(*env); 
   dbgs << std::endl;
