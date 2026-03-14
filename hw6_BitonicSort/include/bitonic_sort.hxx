@@ -205,6 +205,4 @@ private:
   cl::KernelFunctor<cl::Buffer, int, int, int> lsort_kernel_;
 };
 
-// void dump_bitonic_env(const IOCLBitonicEnv& env);
-
 } // namespace iss::ocl
