@@ -1,3 +1,5 @@
+#pragma once
+
 namespace iss::ocl {
 
 template <typename T>
