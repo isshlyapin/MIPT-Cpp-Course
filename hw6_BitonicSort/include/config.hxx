@@ -29,7 +29,7 @@ struct Config {
   static Config read(int argc, char **argv);
 };
 
-static std::ostream& operator<<(std::ostream& os, const Config& cfg) {
+inline std::ostream& operator<<(std::ostream& os, const Config& cfg) {
   cfg.dump(os);
   return os;
 }

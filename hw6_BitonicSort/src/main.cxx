@@ -10,6 +10,7 @@
 #include <vector>
 #include <iostream>
 #include <stdexcept>
+#include <algorithm>
 
 using namespace iss::ocl;
 
@@ -63,9 +64,9 @@ int main(int argc, char **argv) try {
   std::cerr << "OCL ERROR: " << err.err() << ":" << err.what() << std::endl;
   return -1;
 } catch (const CLI::CallForHelp& err) {
-  return -1;
+  return 0;
 } catch (const CLI::CallForAllHelp& err) {
-  return -1;
+  return 0;
 } catch (const CLI::ParseError& err) {
   std::cerr << "INVALID OPTION: " << err.what() << std::endl;
   return -1;

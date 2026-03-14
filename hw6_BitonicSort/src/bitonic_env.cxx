@@ -25,6 +25,9 @@ cl::Platform GpuEnvironment::find_gpu_platform() {
 cl::Device GpuEnvironment::find_gpu_device(const cl::Platform& plt) {
   cl::vector<cl::Device> devices;
   plt.getDevices(CL_DEVICE_TYPE_GPU, &devices);
+  if (devices.empty()) {
+    throw std::runtime_error("GPU devices disappeared after platform selection");
+  }
   return devices.front();  
 }
 
