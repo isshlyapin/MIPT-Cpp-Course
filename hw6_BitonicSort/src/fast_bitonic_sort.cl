@@ -2,13 +2,13 @@
 //                Fast Bitonic Sort Kernel
 //---------------------------------------------------------
 
-#ifndef TYPE
-#define TYPE int
-#endif
+// #ifndef TYPE
+// #define TYPE int
+// #endif
 
-#ifndef LSZ
-#define LSZ 256
-#endif
+// #ifndef LSZ
+// #define LSZ 256
+// #endif
 
 void global_swap(__global TYPE* left, __global TYPE* right) {
     TYPE tmp = *left;
@@ -22,7 +22,7 @@ void local_swap(__local TYPE* left, __local TYPE* right) {
     *right = tmp;
 }
 
-__kernel void local_bitonic_sort(__global TYPE* array, int sz, int cnt, int k) {
+__kernel void local_bitonic_sort(__global TYPE* array, int sz, int merge_size, int sort_size) {
   const int gid = get_global_id(0);
   const int lid = get_local_id(0);
   
@@ -32,16 +32,16 @@ __kernel void local_bitonic_sort(__global TYPE* array, int sz, int cnt, int k) {
   barrier(CLK_LOCAL_MEM_FENCE);
 
   // true == up; false == down
-  bool dir = ((gid / cnt) % 2 == 0);
+  const bool dir = ((gid / merge_size) % 2 == 0);
 
-  for (int i = k; i >= 2; i /= 2) {
-    int j = i/2;
+  for (;sort_size >= 2; sort_size >>= 1) {
+    const int stride = sort_size / 2;
     // protection against repeated comparisons
-    if ((gid % i) < j) {
+    if ((gid % sort_size) < stride) {
       // true if dir == up   and left > right or
       //         dir == down and left < right 
-      if (dir == (larray[lid] > larray[lid + j])) {
-        local_swap(&larray[lid], &larray[lid + j]);
+      if (dir == (larray[lid] > larray[lid + stride])) {
+        local_swap(&larray[lid], &larray[lid + stride]);
       }
     }
     barrier(CLK_LOCAL_MEM_FENCE);
@@ -51,20 +51,20 @@ __kernel void local_bitonic_sort(__global TYPE* array, int sz, int cnt, int k) {
   barrier(CLK_LOCAL_MEM_FENCE);  
 }
 
-__kernel void global_bitonic_sort(__global TYPE* array, int sz, int cnt, int k) {
+__kernel void global_bitonic_sort(__global TYPE* array, int sz, int merge_size, int sort_size) {
   const int gid = get_global_id(0);
 
   // true == up; false == down
-  bool dir = ((gid / cnt) % 2 == 0);
+  bool dir = ((gid / merge_size) % 2 == 0);
 
-  int j = k/2;
+  int stride = sort_size / 2;
 
   // protection against repeated comparisons
-  if ((gid % k) < j) {
+  if ((gid % sort_size) < stride) {
     // true if dir == up   and left > right or
     //         dir == down and left < right 
-    if (dir == (array[gid] > array[gid + j])) {
-      global_swap(&array[gid], &array[gid + j]);
+    if (dir == (array[gid] > array[gid + stride])) {
+      global_swap(&array[gid], &array[gid + stride]);
     }
   }
 }

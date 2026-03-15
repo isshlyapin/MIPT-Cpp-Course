@@ -39,7 +39,25 @@ inline bool is_power_of_2(size_t x) {
 
 inline size_t next_power_of_2(size_t x) {
   size_t power = 2;
-  while (power < x) { power <<= 1; }
+  while (power < x) {
+    const size_t next_power = power << 1;
+    if (next_power <= power) {
+      throw std::overflow_error("Size too large");
+    }
+    power = next_power; 
+  }
+  return power;
+}
+
+inline size_t prev_power_of_2(size_t x) {
+  size_t power = 1;
+  while (power < x) {
+    const size_t next_power = power << 1;
+    if (next_power <= power || next_power > x) {
+      break; // Prevent overflow
+    }
+    power = next_power; 
+  }
   return power;
 }
 

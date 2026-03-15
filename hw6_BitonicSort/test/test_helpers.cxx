@@ -46,3 +46,19 @@ TEST(HelpersTest, LargestDivisorLeqLimit) {
     EXPECT_EQ(largest_divisor_leq_limit(10, 9), 5);
     EXPECT_EQ(largest_divisor_leq_limit(10, 10), 10);
 }
+
+TEST(HelpersTest, PrevPowerOf2) {
+    EXPECT_EQ(prev_power_of_2(0), 1);
+    EXPECT_EQ(prev_power_of_2(1), 1);
+    EXPECT_EQ(prev_power_of_2(2), 2);
+    EXPECT_EQ(prev_power_of_2(3), 2);
+    EXPECT_EQ(prev_power_of_2(4), 4);
+    EXPECT_EQ(prev_power_of_2(5), 4);
+    EXPECT_EQ(prev_power_of_2(6), 4);
+    EXPECT_EQ(prev_power_of_2(7), 4);
+    EXPECT_EQ(prev_power_of_2(8), 8);
+    EXPECT_EQ(prev_power_of_2(9), 8);
+    EXPECT_EQ(prev_power_of_2(15), 8);
+    EXPECT_EQ(prev_power_of_2(16), 16);
+    EXPECT_EQ(prev_power_of_2(17), 16);
+}

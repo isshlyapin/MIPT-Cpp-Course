@@ -6,8 +6,8 @@
 
 namespace iss::ocl {
 
-inline constexpr int CFG_DEFAULT_LOCAL_SIZE = 256;
-inline constexpr int CFG_DEFAULT_ARRAY_SIZE = 1024;
+constexpr const int CFG_DEFAULT_LOCAL_SIZE = 256;
+constexpr const int CFG_DEFAULT_ARRAY_SIZE = 1024;
 
 // dump config to stream
 void Config::dump(std::ostream& os) const {

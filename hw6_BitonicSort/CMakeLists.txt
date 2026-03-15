@@ -37,7 +37,7 @@ configure_file(
 #-----------------------------------------------------------------------------#
 add_library(bitonic_sort
     src/config.cxx
-    src/ocl_bitonic_sort.cxx
+    src/bitonic_env.cxx
 )
 target_include_directories(bitonic_sort
     PUBLIC include
@@ -50,21 +50,22 @@ target_compile_definitions(bitonic_sort
 target_link_libraries(bitonic_sort PRIVATE OpenCL::OpenCL)
 
 #-----------------------------------------------------------------------------#
-#                             Benchmark target (random input)                 #
+#                         GPU Benchmark target (random input)                 #
 #-----------------------------------------------------------------------------#
-# add_executable(bitonic_benchmark_random
-#     src/main.cxx
-# )
-# target_include_directories(bitonic_benchmark_random
-#     PRIVATE lib/CLI
-# )
-# target_compile_definitions(bitonic_benchmark_random
-#     PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
-#     PRIVATE RANDOM_INPUT=1
-#     PRIVATE BENCHMARK=1
-#     PRIVATE TYPE=${TYPE}
-# )
-# target_link_libraries(bitonic_benchmark_random PRIVATE OpenCL::OpenCL bitonic_sort)
+add_executable(gpu_bitonic_benchmark_random
+    src/main.cxx
+)
+target_include_directories(gpu_bitonic_benchmark_random
+    PRIVATE lib/CLI
+)
+target_compile_definitions(gpu_bitonic_benchmark_random
+    PRIVATE ANALYZE=$<BOOL:${ANALYZE}>
+    PRIVATE GPU_SORT=1
+    PRIVATE RANDOM_INPUT=1
+    PRIVATE BENCHMARK=1
+    PRIVATE TYPE=${TYPE}
+)
+target_link_libraries(gpu_bitonic_benchmark_random PRIVATE OpenCL::OpenCL bitonic_sort)
 
 #-----------------------------------------------------------------------------#
 #                         GPU Benchmark target (std::cin input)               #
