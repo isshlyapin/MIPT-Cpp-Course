@@ -46,10 +46,13 @@ public:
   template<std::contiguous_iterator It>
   requires std::same_as<std::iter_value_t<It>, T>
   void sort(It start, It end) {
-    validate_range(start, end);
+    const ptrdiff_t input_size = end - start;
 
-    const auto input_size = end - start;
-    if (input_size < 2) { return; }
+    validate_range(input_size);
+
+    if (is_trivially_sorted(input_size)) {
+      return;
+    }
 
     auto session = make_sort_session(input_size);
 
@@ -80,19 +83,23 @@ private:
     return program;
   }
 
-  template<std::contiguous_iterator It>
-  void validate_range(It start, It end) {
-    const auto size = end - start;
-    if (size < 0) {
-      throw std::invalid_argument("Invalid range: start > end");
-    }
-    if (size > (1 << 30)) {
-      throw std::invalid_argument("Invalid range: size must be <= 2^30");
-    }
+  void validate_range(ptrdiff_t size) const {
+    validate_range_logical_limit(size);
     validate_range_device_limit(size);
   }
 
-  void validate_range_device_limit(size_t size) {
+  void validate_range_logical_limit(ptrdiff_t size) const {
+    if (size < 0) {
+      throw std::invalid_argument("Invalid range: start > end");
+    }
+    if (size > get_max_input_size()) {
+      throw std::invalid_argument(
+        "Invalid range: size must be <= " + std::to_string(get_max_input_size())
+      );
+    }
+  }
+
+  void validate_range_device_limit(ptrdiff_t size) const {
     const auto max_global_size = env_.get_device(). template getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>();
     const auto max_alloc_size = env_.get_device(). template getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
 
@@ -198,7 +205,18 @@ private:
       session.buffer, CL_TRUE, 0, bytes_size(session.input_size), data
     );
   }
- 
+
+  bool is_trivially_sorted(ptrdiff_t size) const {
+    return size < 2;
+  }
+
+  constexpr static size_t get_max_input_size() {
+    // The maximum number of elements that, 
+    // when augmented to a power of 2, 
+    // can still be indexed using an int type variable
+    return (1 << 30);
+  }
+  
   Env env_;
   size_t lsz_;
 
