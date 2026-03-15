@@ -11,10 +11,12 @@
 
 #include <memory>
 #include <limits>
+#include <string>
 #include <cstddef>
 #include <concepts>
 #include <iterator>
 #include <stdexcept>
+#include <algorithm>
 
 namespace iss::ocl {
 

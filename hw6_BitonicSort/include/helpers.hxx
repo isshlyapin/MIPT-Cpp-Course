@@ -3,6 +3,7 @@
 #include <random>
 #include <concepts>
 #include <iterator>
+#include <stdexcept>
 
 namespace iss::ocl {
 

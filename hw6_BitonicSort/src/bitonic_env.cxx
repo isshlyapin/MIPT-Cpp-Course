@@ -3,6 +3,9 @@
 
 #include "CL/opencl.hpp"
 
+#include <vector>
+#include <stdexcept>
+
 namespace iss::ocl {
 
 GpuEnvironment::GpuEnvironment() 

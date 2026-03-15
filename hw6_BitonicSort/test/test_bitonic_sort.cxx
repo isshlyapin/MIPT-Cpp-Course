@@ -5,6 +5,7 @@
 #include <gtest/gtest.h>
 
 #include <vector>
+#include <numeric>
 #include <algorithm>
 #include <stdexcept>
 
@@ -44,7 +45,7 @@ TEST(BitonicSorterTest, InvalidLocalSizeThrowsException) {
     EXPECT_THROW((BitonicSorter<int, GpuEnvironment>(env, max_lsz + 1)), std::runtime_error);
 }
 
-TEST(BitonicSortTest, ValidRangeThrowsException) {
+TEST(BitonicSortTest, ValidRangeDoesNotThrow) {
     auto env = GpuEnvironment();
     BitonicSorter<int, GpuEnvironment> sorter(env, 256);
     

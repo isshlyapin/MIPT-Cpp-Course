@@ -5,6 +5,8 @@
 
 #include "CL/opencl.hpp"
 
+#include <concepts>
+
 namespace iss::ocl {
 
 template <class Env>
